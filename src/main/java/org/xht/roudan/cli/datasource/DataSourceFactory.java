@@ -15,7 +15,7 @@ import java.util.logging.Logger;
 @Slf4j
 public class DataSourceFactory {
 
-    public static DataSource create(Driver driver, String url, String user, String password) {
+    public static DataSource create(Driver driver, String url, String user, String password) throws Exception {
         log.debug("Creating DataSource for: {}", url);
 
         try {

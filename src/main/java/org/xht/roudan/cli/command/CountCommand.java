@@ -6,8 +6,10 @@ import cn.hutool.json.JSONUtil;
 import org.xht.roudan.cli.Main;
 import org.xht.roudan.cli.output.ResultWriter;
 import org.xht.rd.RD;
+import org.xht.xdb.util.MapUtil;
 import picocli.CommandLine;
 
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 @CommandLine.Command(
@@ -35,17 +37,20 @@ public class CountCommand implements Callable<Integer> {
     public Integer call() throws Exception {
         long start = System.currentTimeMillis();
         try {
-            Main.init(main.getConfigFile(), main.getJdbcUrl(), main.getUser(),
+            Main.init(
+                    main.getConfigFile(), main.getJdbcUrl(), main.getUser(),
                     main.getPassword(), main.getDriverClass(), main.getDriverJar(),
-                    main.getDatasourceName(), main.isShowSql());
+                    main.getDatasourceName(), main.isShowSql()
+            );
 
             String resolvedSql = sql != null ? sql : cn.hutool.core.io.FileUtil.readUtf8String(sqlFile);
-            if (resolvedSql == null) throw new IllegalArgumentException("Either -s/--sql or -f/--sql-file is required");
+            if (resolvedSql == null)
+                throw new IllegalArgumentException("Either -s/--sql or -f/--sql-file is required");
 
             long count;
             if (named) {
-                JSONObject jsonArgs = argsJson != null ? JSONUtil.parseObj(argsJson) : new JSONObject();
-                count = RD.namedQuery().sql(resolvedSql).args(toMapUtil(jsonArgs)).executeCount();
+                MapUtil<Object> mapArgs = toMapUtil(argsJson);
+                count = RD.namedQuery().sql(resolvedSql).args(mapArgs).executeCount();
             } else {
                 Object[] parsedArgs = argsJson != null ? JSONUtil.parseArray(argsJson).toArray() : new Object[0];
                 count = RD.query().sql(resolvedSql).args(parsedArgs).executeCount();
@@ -64,11 +69,14 @@ public class CountCommand implements Callable<Integer> {
         }
     }
 
-    private cn.hutool.core.map.MapUtil<Object> toMapUtil(JSONObject obj) {
-        cn.hutool.core.map.MapUtil<Object> mapUtil = cn.hutool.core.map.MapUtil.create();
-        for (java.util.Map.Entry<String, Object> entry : obj) {
-            mapUtil.put(entry.getKey(), entry.getValue());
+    private MapUtil<Object> toMapUtil(String json) {
+        MapUtil<Object> mapUtil = MapUtil.init();
+        if (json != null) {
+            JSONObject obj = JSONUtil.parseObj(json);
+            for (Map.Entry<String, Object> entry : obj) {
+                mapUtil.add(entry.getKey(), entry.getValue());
+            }
         }
-        return (cn.hutool.core.map.MapUtil<Object>) mapUtil;
+        return mapUtil;
     }
 }

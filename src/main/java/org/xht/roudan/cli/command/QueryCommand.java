@@ -6,9 +6,10 @@ import cn.hutool.json.JSONUtil;
 import org.xht.roudan.cli.Main;
 import org.xht.roudan.cli.output.ResultWriter;
 import org.xht.rd.RD;
-import org.xht.xdb.sql.ResultQuery;
+import org.xht.xdb.util.MapUtil;
 import picocli.CommandLine;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -47,15 +48,27 @@ public class QueryCommand implements Callable<Integer> {
     public Integer call() throws Exception {
         long start = System.currentTimeMillis();
         try {
-            Main.init(main.getConfigFile(), main.getJdbcUrl(), main.getUser(),
+            Main.init(
+                    main.getConfigFile(), main.getJdbcUrl(), main.getUser(),
                     main.getPassword(), main.getDriverClass(), main.getDriverJar(),
-                    main.getDatasourceName(), main.isShowSql());
+                    main.getDatasourceName(), main.isShowSql()
+            );
 
-            String resolvedSql = resolveSql();
-            List<Map<String, Object>> rows = executeQuery(resolvedSql);
+            String resolvedSql = sql != null ? sql : cn.hutool.core.io.FileUtil.readUtf8String(sqlFile);
+            if (resolvedSql == null)
+                throw new IllegalArgumentException("Either -s/--sql or -f/--sql-file is required");
+
+            List<Map<String, Object>> rows;
+            if (named) {
+                MapUtil<Object> mapArgs = toMapUtil(argsJson);
+                rows = RD.namedQuery().sql(resolvedSql).args(mapArgs).executeQuery().result();
+            } else {
+                Object[] parsedArgs = parseJsonArray(argsJson);
+                rows = RD.query().sql(resolvedSql).args(parsedArgs).executeQuery().result();
+            }
+
             List<Map<String, Object>> limited = applyLimit(rows);
             buildAndPrintResult(limited, rows.size(), start);
-
             return 0;
         } catch (Exception e) {
             ResultWriter.printError(e, System.currentTimeMillis() - start);
@@ -63,40 +76,28 @@ public class QueryCommand implements Callable<Integer> {
         }
     }
 
-    private String resolveSql() throws Exception {
-        if (sql != null) return sql;
-        if (sqlFile != null) return cn.hutool.core.io.FileUtil.readUtf8String(sqlFile);
-        throw new IllegalArgumentException("Either -s/--sql or -f/--sql-file is required");
-    }
-
-    private List<Map<String, Object>> executeQuery(String resolvedSql) {
-        if (named) {
-            JSONObject jsonArgs = argsJson != null ? JSONUtil.parseObj(argsJson) : new JSONObject();
-            return RD.namedQuery().sql(resolvedSql).args(toMapUtil(jsonArgs)).executeQuery().result();
-        } else {
-            Object[] parsedArgs = argsJson != null ? parseJsonArray(argsJson) : new Object[0];
-            return RD.query().sql(resolvedSql).args(parsedArgs).executeQuery().result();
-        }
-    }
-
     private Object[] parseJsonArray(String json) {
+        if (json == null) return new Object[0];
         JSONArray arr = JSONUtil.parseArray(json);
         return arr.toArray();
     }
 
-    private cn.hutool.core.map.MapUtil<Object> toMapUtil(JSONObject obj) {
-        cn.hutool.core.map.MapUtil<Object> mapUtil = cn.hutool.core.map.MapUtil.create();
-        for (Map.Entry<String, Object> entry : obj) {
-            mapUtil.put(entry.getKey(), entry.getValue());
+    private MapUtil<Object> toMapUtil(String json) {
+        MapUtil<Object> mapUtil = MapUtil.init();
+        if (json != null) {
+            JSONObject obj = JSONUtil.parseObj(json);
+            for (Map.Entry<String, Object> entry : obj) {
+                mapUtil.add(entry.getKey(), entry.getValue());
+            }
         }
-        return (cn.hutool.core.map.MapUtil<Object>) mapUtil;
+        return mapUtil;
     }
 
     private List<Map<String, Object>> applyLimit(List<Map<String, Object>> rows) {
         if (page != null && size != null) {
             int from = (page - 1) * size;
             int to = Math.min(from + size, rows.size());
-            if (from >= rows.size()) return java.util.Collections.emptyList();
+            if (from >= rows.size()) return Collections.emptyList();
             return rows.subList(from, to);
         }
         if (limit != null && limit < rows.size()) {
@@ -111,16 +112,14 @@ public class QueryCommand implements Callable<Integer> {
             ResultWriter.printResult(r -> {
                 r.put("success", true);
                 r.put("rowCount", 0);
-                r.put("cols", java.util.Collections.emptyList());
-                r.put("rows", java.util.Collections.emptyList());
+                r.put("cols", Collections.emptyList());
+                r.put("rows", Collections.emptyList());
                 r.put("timeMs", elapsed);
             }, main.isPretty());
             return;
         }
-
         Map<String, Object> first = rows.get(0);
         String[] cols = first.keySet().toArray(new String[0]);
-
         java.util.List<Object[]> rowData = new java.util.ArrayList<>();
         for (Map<String, Object> row : rows) {
             Object[] values = new Object[cols.length];
@@ -129,12 +128,10 @@ public class QueryCommand implements Callable<Integer> {
             }
             rowData.add(values);
         }
-
-        java.util.List<String> colList = java.util.Arrays.asList(cols);
         ResultWriter.printResult(r -> {
             r.put("success", true);
             r.put("rowCount", totalCount);
-            r.put("cols", colList);
+            r.put("cols", java.util.Arrays.asList(cols));
             r.put("rows", rowData);
             r.put("timeMs", elapsed);
         }, main.isPretty());

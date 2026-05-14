@@ -1,5 +1,6 @@
 package org.xht.roudan.cli;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.xht.roudan.cli.command.*;
 import org.xht.roudan.cli.config.CliConfig;
@@ -15,6 +16,7 @@ import java.sql.Driver;
 import java.util.concurrent.Callable;
 
 @Slf4j
+@Getter
 @CommandLine.Command(
         name = "roudan-jdbc-cli",
         description = "JDBC CLI tool for AI agents",
@@ -63,10 +65,6 @@ public class Main implements Callable<Integer> {
 
     @CommandLine.Option(names = {"--show-sql"}, description = "Print SQL to stderr for debugging")
     private boolean showSql;
-
-    public String getOutputFormat() { return outputFormat; }
-    public boolean isNoHeader() { return noHeader; }
-    public boolean isPretty() { return pretty; }
 
     public static void main(String[] args) {
         int exitCode = new CommandLine(new Main())
