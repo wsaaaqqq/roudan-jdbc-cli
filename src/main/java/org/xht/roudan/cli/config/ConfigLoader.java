@@ -22,7 +22,7 @@ public class ConfigLoader {
             String envConfig = System.getenv("ROUDAN_JDBC_CONFIG");
             if (envConfig != null) {
                 loadFromYaml(envConfig, config);
-            } else if (FileUtil.exist(DEFAULT_CONFIG_FILE)) {
+            } else if (new File(DEFAULT_CONFIG_FILE).exists()) {
                 loadFromYaml(DEFAULT_CONFIG_FILE, config);
             } else {
                 String homeConfig = System.getProperty("user.home") + "/.roudan/config.yaml";
@@ -54,8 +54,12 @@ public class ConfigLoader {
             }
             if (root != null && root.getSettings() != null) {
                 CliConfig.Settings settings = new CliConfig.Settings();
-                settings.setShowSql(root.getSettings().isShowSql());
-                settings.setAutoCommit(root.getSettings().isAutoCommit());
+                CliConfig.Settings src = root.getSettings();
+                settings.setShowSql(src.isShowSql());
+                settings.setAutoCommit(src.isAutoCommit());
+                settings.setMaxPoolSize(src.getMaxPoolSize());
+                settings.setMinIdle(src.getMinIdle());
+                settings.setConnectionTimeout(src.getConnectionTimeout());
                 config.setSettings(settings);
             }
         }
@@ -76,6 +80,21 @@ public class ConfigLoader {
         if (password != null) config.setPassword(password);
         if (driverClass != null) config.setDriverClass(driverClass);
         if (driverJar != null) config.setDriverJar(driverJar);
+    }
+
+    public static CliConfig.DatasourceConfig loadDatasource(String configFile, String datasourceName) throws Exception {
+        try (InputStream in = new FileInputStream(configFile)) {
+            Yaml yaml = new Yaml();
+            CliConfig.YamlRoot root = yaml.loadAs(in, CliConfig.YamlRoot.class);
+            if (root != null && root.getDatasources() != null) {
+                CliConfig.DatasourceConfig ds = root.getDatasources().get(datasourceName);
+                if (ds == null) {
+                    throw new IllegalArgumentException("Datasource '" + datasourceName + "' not found in config: " + configFile);
+                }
+                return ds;
+            }
+        }
+        throw new IllegalArgumentException("No datasources defined in config: " + configFile);
     }
 
     private static void validate(CliConfig config) {

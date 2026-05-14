@@ -1,0 +1,1 @@
+INSERT INTO T_USER VALUES(:id, :name)

@@ -13,6 +13,7 @@ import org.xht.rd.RD;
 import org.xht.rd.RDConfig;
 import picocli.CommandLine;
 
+import java.sql.Connection;
 import java.sql.Driver;
 import java.util.concurrent.Callable;
 
@@ -30,7 +31,10 @@ import java.util.concurrent.Callable;
                 ModifyCommand.class,
                 TablesCommand.class,
                 DescribeCommand.class,
-                TestCommand.class
+                TestCommand.class,
+                BeginCommand.class,
+                CommitCommand.class,
+                RollbackCommand.class
         }
 )
 public class Main implements Callable<Integer> {
@@ -68,6 +72,36 @@ public class Main implements Callable<Integer> {
     @CommandLine.Option(names = {"--show-sql"}, description = "Print SQL to stderr for debugging")
     private boolean showSql;
 
+    @CommandLine.Option(names = "--connect-timeout", defaultValue = "30000", description = "JDBC connection timeout in milliseconds")
+    private int connectTimeout = 30000;
+
+    @CommandLine.Option(names = "--dry-run", description = "Print SQL without executing")
+    private boolean dryRun;
+
+    private static final ThreadLocal<Connection> TX_CONNECTION = new ThreadLocal<>();
+
+    public static Connection getTxConnection() {
+        return TX_CONNECTION.get();
+    }
+
+    public static void setTxConnection(Connection conn) {
+        TX_CONNECTION.set(conn);
+    }
+
+    public static void clearTxConnection() {
+        TX_CONNECTION.remove();
+    }
+
+    private static final ThreadLocal<Driver> LOADED_DRIVER = new ThreadLocal<>();
+    private static final ThreadLocal<String> RESOLVED_URL = new ThreadLocal<>();
+    private static final ThreadLocal<String> RESOLVED_USER = new ThreadLocal<>();
+    private static final ThreadLocal<String> RESOLVED_PASSWORD = new ThreadLocal<>();
+
+    public static Driver getLoadedDriver() { return LOADED_DRIVER.get(); }
+    public static String getResolvedUrl() { return RESOLVED_URL.get(); }
+    public static String getResolvedUser() { return RESOLVED_USER.get(); }
+    public static String getResolvedPassword() { return RESOLVED_PASSWORD.get(); }
+
     public static void main(String[] args) {
         int exitCode = new CommandLine(new Main())
                 .setExecutionExceptionHandler(new ErrorHandler())
@@ -101,12 +135,51 @@ public class Main implements Callable<Integer> {
     public static void init(String configFile, String jdbcUrl, String user, String password,
                             String driverClass, String driverJar, String datasourceName,
                             boolean showSql) throws Exception {
-        CliConfig config = ConfigLoader.load(configFile, jdbcUrl, user, password, driverClass, driverJar);
+        init(configFile, jdbcUrl, user, password, driverClass, driverJar, datasourceName, showSql, 30000);
+    }
 
-        RDConfig.setShowSql(showSql);
+    public static void init(String configFile, String jdbcUrl, String user, String password,
+                            String driverClass, String driverJar, String datasourceName,
+                            boolean showSql, int connectTimeout) throws Exception {
+        CliConfig config;
+
+        if (configFile != null && !"default".equals(datasourceName)) {
+            CliConfig.DatasourceConfig dsConfig = ConfigLoader.loadDatasource(configFile, datasourceName);
+            config = new CliConfig();
+            config.setUrl(dsConfig.getUrl());
+            config.setUser(dsConfig.getUser());
+            config.setPassword(dsConfig.getPassword());
+            config.setDriverClass(dsConfig.getDriver());
+            config.setDriverJar(dsConfig.getDriverJar());
+            if (jdbcUrl != null) config.setUrl(jdbcUrl);
+            if (user != null) config.setUser(user);
+            if (password != null) config.setPassword(password);
+            if (driverClass != null) config.setDriverClass(driverClass);
+            if (driverJar != null) config.setDriverJar(driverJar);
+            if (config.getUrl() == null || config.getDriverClass() == null || config.getDriverJar() == null) {
+                throw new IllegalArgumentException("JDBC URL, driver class, and driver JAR are required.");
+            }
+        } else {
+            config = ConfigLoader.load(configFile, jdbcUrl, user, password, driverClass, driverJar);
+        }
+
+        CliConfig.Settings settings = config.getSettings();
+        if (settings == null) {
+            settings = new CliConfig.Settings();
+        }
+        if (showSql) settings.setShowSql(true);
+        RDConfig.setShowSql(settings.isShowSql());
 
         Driver driver = DriverLoader.load(config.getDriverJar(), config.getDriverClass());
-        javax.sql.DataSource ds = DataSourceFactory.create(driver, config.getUrl(), config.getUser(), config.getPassword());
-        RD.dataSourceConfig(c -> c.addDataSource(ds, datasourceName));
+        LOADED_DRIVER.set(driver);
+        RESOLVED_URL.set(config.getUrl());
+        RESOLVED_USER.set(config.getUser());
+        RESOLVED_PASSWORD.set(config.getPassword());
+
+        javax.sql.DataSource ds = DataSourceFactory.create(driver, config.getUrl(), config.getUser(), config.getPassword(), settings, connectTimeout);
+        RD.dataSourceConfig(c -> {
+            c.addDataSource(ds, datasourceName);
+            c.selectDataSourceDefault(datasourceName);
+        });
     }
 }

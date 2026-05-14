@@ -32,7 +32,7 @@ public class TablesCommand implements Callable<Integer> {
         try {
             Main.init(main.getConfigFile(), main.getJdbcUrl(), main.getUser(),
                     main.getPassword(), main.getDriverClass(), main.getDriverJar(),
-                    main.getDatasourceName(), main.isShowSql());
+                    main.getDatasourceName(), main.isShowSql(), main.getConnectTimeout());
 
             List<Map<String, String>> tables = new ArrayList<>();
             try (Connection conn = RD.getConnection()) {

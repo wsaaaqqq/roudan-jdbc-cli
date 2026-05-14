@@ -26,6 +26,12 @@ public class CliConfig {
     public static class Settings {
         private boolean showSql;
         private boolean autoCommit;
+        @Builder.Default
+        private int maxPoolSize = 2;
+        @Builder.Default
+        private int minIdle = 0;
+        @Builder.Default
+        private long connectionTimeout = 10000;
     }
 
     @Data

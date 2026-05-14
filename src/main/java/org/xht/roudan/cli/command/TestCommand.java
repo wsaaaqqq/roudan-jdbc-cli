@@ -23,7 +23,7 @@ public class TestCommand implements Callable<Integer> {
         try {
             Main.init(main.getConfigFile(), main.getJdbcUrl(), main.getUser(),
                     main.getPassword(), main.getDriverClass(), main.getDriverJar(),
-                    main.getDatasourceName(), main.isShowSql());
+                    main.getDatasourceName(), main.isShowSql(), main.getConnectTimeout());
 
             String dbProduct;
             try (Connection conn = RD.getConnection()) {

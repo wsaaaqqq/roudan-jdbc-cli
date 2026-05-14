@@ -18,7 +18,7 @@
     <plugins>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.13.0</version>
+        <version>3.14.0</version>
         <configuration>
           <source>${java.version}</source>
           <target>${java.version}</target>
@@ -72,13 +72,17 @@
           </archive>
         </configuration>
       </plugin>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.2.5</version>
+      </plugin>
     </plugins>
   </build>
   <dependencies>
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
-      <version>1.18.36</version>
+      <version>1.18.40</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -101,14 +105,14 @@
     </dependency>
   </dependencies>
   <properties>
-    <lombok.version>1.18.36</lombok.version>
-    <hutool.version>5.8.25</hutool.version>
-    <slf4j.version>1.7.36</slf4j.version>
-    <java.version>1.8</java.version>
+    <lombok.version>1.18.40</lombok.version>
     <maven.compiler.target>${java.version}</maven.compiler.target>
     <snakeyaml.version>2.0</snakeyaml.version>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <picocli.version>4.7.6</picocli.version>
+    <slf4j.version>1.7.36</slf4j.version>
+    <java.version>1.8</java.version>
     <maven.compiler.source>${java.version}</maven.compiler.source>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <hutool.version>5.8.25</hutool.version>
   </properties>
 </project>

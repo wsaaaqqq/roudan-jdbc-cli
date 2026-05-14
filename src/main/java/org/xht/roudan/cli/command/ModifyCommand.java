@@ -8,6 +8,7 @@ import org.xht.rd.RD;
 import org.xht.xdb.util.MapUtil;
 import picocli.CommandLine;
 
+import java.sql.Connection;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
@@ -39,12 +40,27 @@ public class ModifyCommand implements Callable<Integer> {
             Main.init(
                     main.getConfigFile(), main.getJdbcUrl(), main.getUser(),
                     main.getPassword(), main.getDriverClass(), main.getDriverJar(),
-                    main.getDatasourceName(), main.isShowSql()
+                    main.getDatasourceName(), main.isShowSql(), main.getConnectTimeout()
             );
 
             String resolvedSql = sql != null ? sql : cn.hutool.core.io.FileUtil.readUtf8String(sqlFile);
             if (resolvedSql == null)
                 throw new IllegalArgumentException("Either -s/--sql or -f/--sql-file is required");
+
+            if (main.isDryRun()) {
+                ResultWriter.printResult(r -> {
+                    r.put("success", true);
+                    r.put("dryRun", true);
+                    r.put("sql", resolvedSql);
+                    r.put("timeMs", 0);
+                }, main.isPretty());
+                return 0;
+            }
+
+            Connection txConn = Main.getTxConnection();
+            if (txConn != null) {
+                RD.setConnection(txConn);
+            }
 
             MapUtil<Object> mapArgs = toMapUtil(argsJson);
             int affectedRows = named
