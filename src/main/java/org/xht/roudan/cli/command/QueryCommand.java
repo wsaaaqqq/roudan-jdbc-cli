@@ -109,13 +109,10 @@ public class QueryCommand implements Callable<Integer> {
     private void buildAndPrintResult(List<Map<String, Object>> rows, int totalCount, long start) {
         long elapsed = System.currentTimeMillis() - start;
         if (rows.isEmpty()) {
-            ResultWriter.printResult(r -> {
-                r.put("success", true);
-                r.put("rowCount", 0);
-                r.put("cols", Collections.emptyList());
-                r.put("rows", Collections.emptyList());
-                r.put("timeMs", elapsed);
-            }, main.isPretty());
+            ResultWriter.printQueryResult(
+                    java.util.Collections.emptyList(), java.util.Collections.emptyList(),
+                    0, elapsed, main.getOutputFormat(), main.isPretty(), main.isNoHeader()
+            );
             return;
         }
         Map<String, Object> first = rows.get(0);
@@ -128,12 +125,9 @@ public class QueryCommand implements Callable<Integer> {
             }
             rowData.add(values);
         }
-        ResultWriter.printResult(r -> {
-            r.put("success", true);
-            r.put("rowCount", totalCount);
-            r.put("cols", java.util.Arrays.asList(cols));
-            r.put("rows", rowData);
-            r.put("timeMs", elapsed);
-        }, main.isPretty());
+        ResultWriter.printQueryResult(
+                java.util.Arrays.asList(cols), rowData, totalCount, elapsed,
+                main.getOutputFormat(), main.isPretty(), main.isNoHeader()
+        );
     }
 }

@@ -1,6 +1,7 @@
 package org.xht.roudan.cli;
 
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.xht.roudan.cli.command.*;
 import org.xht.roudan.cli.config.CliConfig;
@@ -17,6 +18,7 @@ import java.util.concurrent.Callable;
 
 @Slf4j
 @Getter
+@Setter
 @CommandLine.Command(
         name = "roudan-jdbc-cli",
         description = "JDBC CLI tool for AI agents",
