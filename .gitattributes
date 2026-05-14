@@ -1,0 +1,21 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Batch
+*.bat text eol=crlf
+
+# Shell
+*.sh text eol=lf
+
+# Java
+*.java text diff=java
+
+# XML
+*.xml text
+
+# Markdown
+*.md text
+
+# YAML
+*.yaml text
+*.yml text
