@@ -1,6 +1,6 @@
 # roudan-jdbc-cli
 
-[English](README.md) | [简体中文](README.zh.md) | [繁體中文](README.zht.md) | [한국어](README.ko.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [Italiano](README.it.md) | [Dansk](README.da.md) | [日本語](README.ja.md) | [Polski](README.pl.md) | [Русский](README.ru.md) | [Bosanski](README.bs.md) | [العربية](README.ar.md) | [Norsk](README.no.md) | [Português (Brasil)](README.br.md) | [ไทย](README.th.md) | [Türkçe](README.tr.md) | [Українська](README.uk.md) | [বাংলা](README.bn.md) | [Ελληνικά](README.gr.md) | [Tiếng Việt](README.vi.md)
+[English](README.md) | [简体中文](readme/README.zh.md) | [繁體中文](readme/README.zht.md) | [한국어](readme/README.ko.md) | [Deutsch](readme/README.de.md) | [Español](readme/README.es.md) | [Français](readme/README.fr.md) | [Italiano](readme/README.it.md) | [Dansk](readme/README.da.md) | [日本語](readme/README.ja.md) | [Polski](readme/README.pl.md) | [Русский](readme/README.ru.md) | [Bosanski](readme/README.bs.md) | [العربية](readme/README.ar.md) | [Norsk](readme/README.no.md) | [Português (Brasil)](readme/README.br.md) | [ไทย](readme/README.th.md) | [Türkçe](readme/README.tr.md) | [Українська](readme/README.uk.md) | [বাংলা](readme/README.bn.md) | [Ελληνικά](readme/README.gr.md) | [Tiếng Việt](readme/README.vi.md)
 
 JDBC CLI tool for AI agents. Executes SQL against any JDBC database, outputs JSON to stdout.
 

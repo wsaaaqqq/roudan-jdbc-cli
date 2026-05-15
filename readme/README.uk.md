@@ -1,6 +1,6 @@
 # roudan-jdbc-cli
 
-[English](README.md) | [简体中文](README.zh.md) | [繁體中文](README.zht.md) | [한국어](README.ko.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [Italiano](README.it.md) | [Dansk](README.da.md) | [日本語](README.ja.md) | [Polski](README.pl.md) | [Русский](README.ru.md) | [Bosanski](README.bs.md) | [العربية](README.ar.md) | [Norsk](README.no.md) | [Português (Brasil)](README.br.md) | [ไทย](README.th.md) | [Türkçe](README.tr.md) | [Українська](README.uk.md) | [বাংলা](README.bn.md) | [Ελληνικά](README.gr.md) | [Tiếng Việt](README.vi.md)
+[English](../README.md) | [简体中文](README.zh.md) | [繁體中文](README.zht.md) | [한국어](README.ko.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [Italiano](README.it.md) | [Dansk](README.da.md) | [日本語](README.ja.md) | [Polski](README.pl.md) | [Русский](README.ru.md) | [Bosanski](README.bs.md) | [العربية](README.ar.md) | [Norsk](README.no.md) | [Português (Brasil)](README.br.md) | [ไทย](README.th.md) | [Türkçe](README.tr.md) | [Українська](README.uk.md) | [বাংলা](README.bn.md) | [Ελληνικά](README.gr.md) | [Tiếng Việt](README.vi.md)
 
 > ⚠️ **This translation is not yet available.** The English version is shown below.  
 > Help us translate! [Edit on GitHub](https://github.com/wsaaaqqq/roudan-jdbc-cli)
@@ -155,11 +155,11 @@ mvn package
 
 ```
 roudan-jdbc-cli
-  ├── Picocli CLI entry → parse args
-  ├── ConfigLoader    → Config merge (YAML + CLI)
-  ├── DriverLoader    → URLClassLoader dynamically loads JDBC drivers
-  ├── DataSourceFactory → Register with roudan-core
-  └── CommandExecutor → RD.query() / RD.modify() / JDBC metadata
+  ├── Picocli CLI entry �?parse args
+  ├── ConfigLoader    �?Config merge (YAML + CLI)
+  ├── DriverLoader    �?URLClassLoader dynamically loads JDBC drivers
+  ├── DataSourceFactory �?Register with roudan-core
+  └── CommandExecutor �?RD.query() / RD.modify() / JDBC metadata
 ```
 
 Built on [roudan-core](https://github.com/wsaaaqqq/xdb).
