@@ -3,7 +3,7 @@
 ## 语法
 
 ```bash
-roudan-jdbc-cli tables [选项]
+rd tables [选项]
 ```
 
 ## 选项
@@ -30,8 +30,8 @@ roudan-jdbc-cli tables [选项]
 
 ```bash
 # 列出所有表
-roudan-jdbc-cli tables
+rd tables
 
 # 按模式过滤
-roudan-jdbc-cli tables --pattern "T_%"
+rd tables --pattern "T_%"
 ```

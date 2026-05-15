@@ -1,60 +1,62 @@
-# roudan-jdbc-cli — AI Agent Installation Guide
-
-## Prerequisites
-
-Check Java 8+ is available:
-
-```bash
-java -version 2>&1
-```
-
-Expected: `openjdk version "1.8.x"` or higher (Java 11 / 17 / 21+ also work).
-
-If Java is not installed, install it:
-- **macOS**: `brew install openjdk@17`
-- **Ubuntu**: `apt-get install openjdk-17-jdk`
-- **Windows**: download from https://adoptium.net/
+# rd — AI Agent Installation Guide
 
 ## Install roudan-jdbc-cli
 
-### Option A: npm (recommended)
+Choose one of the following methods:
+
+### Option A: One-line install (recommended)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/wsaaaqqq/roudan-jdbc-cli/main/install.sh | bash
+```
+
+This downloads a portable JRE 8 and the CLI jar. No pre-installed Java required.
+
+### Option B: npm
 
 ```bash
 npm install -g roudan-jdbc-cli
 ```
 
-This downloads the fat-jar and creates a `roudan-jdbc-cli` command on PATH.
+Also bundles a portable JRE automatically.
 
-### Option B: Docker
+### Option C: Docker
 
 ```bash
 docker pull wsaaaqqq/roudan-jdbc-cli:latest
-alias roudan-jdbc-cli='docker run --rm -v "$(pwd):/workdir" -w /workdir wsaaaqqq/roudan-jdbc-cli'
+alias rd='docker run --rm -v "$(pwd):/workdir" -w /workdir wsaaaqqq/roudan-jdbc-cli'
 ```
 
-### Option C: Direct download
+### Option D: Manual download
 
 ```bash
-mkdir -p ~/.roudan-cli/lib
+# Create directories
+mkdir -p ~/.roudan-cli/lib ~/.roudan-cli/jre8
+
+# Download JRE 8 (Adoptium Temurin)
+# Windows: https://api.adoptium.net/v3/binary/latest/8/ga/windows/x64/jre/hotspot/normal/eclipse
+# Linux:   https://api.adoptium.net/v3/binary/latest/8/ga/linux/x64/jre/hotspot/normal/eclipse
+# macOS:   https://api.adoptium.net/v3/binary/latest/8/ga/mac/x64/jre/hotspot/normal/eclipse
+
+# Download CLI jar
 curl -fsSL -o ~/.roudan-cli/lib/roudan-jdbc-cli.jar \
   https://github.com/wsaaaqqq/roudan-jdbc-cli/releases/latest/download/roudan-jdbc-cli.jar
 
 # Create wrapper (Unix)
-cat > ~/.roudan-cli/roudan-jdbc-cli << 'EOF'
+cat > ~/.roudan-cli/rd << 'EOF'
 #!/bin/sh
-exec java -jar "$HOME/.roudan-cli/lib/roudan-jdbc-cli.jar" "$@"
+DIR="$(dirname "$(readlink -f "$0")")"
+if [ -x "$DIR/jre8/bin/java" ]; then
+  exec "$DIR/jre8/bin/java" -jar "$DIR/lib/roudan-jdbc-cli.jar" "$@"
+else
+  exec java -jar "$DIR/lib/roudan-jdbc-cli.jar" "$@"
+fi
 EOF
 chmod +x ~/.roudan-cli/roudan-jdbc-cli
 
 # Add to PATH
 export PATH="$HOME/.roudan-cli:$PATH"
 echo 'export PATH="$HOME/.roudan-cli:$PATH"' >> ~/.bashrc
-```
-
-### Option D: One-line install script
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/wsaaaqqq/roudan-jdbc-cli/main/install.sh | bash
 ```
 
 ## Install OpenCode / Claude Code Skill
@@ -82,10 +84,10 @@ Restart OpenCode for the skill to be loaded.
 ## Verify
 
 ```bash
-roudan-jdbc-cli --help
+rd --help
 ```
 
-Expected output shows available commands: `query`, `count`, `modify`, `tables`, `describe`, `test`, `begin`, `commit`, `rollback`.
+Expected output shows available commands: `query`, `count`, `modify`, `tables`, `describe`, `test`, `begin`, `commit`, `rollback`, `login`, `logout`, `use`, `connections`.
 
 ## Quick Start
 
@@ -95,10 +97,27 @@ Test with H2 in-memory database (no external DB needed):
 # Download H2 driver if not already in Maven cache
 H2JAR="$HOME/.m2/repository/com/h2database/h2/2.2.220/h2-2.2.220.jar"
 
-roudan-jdbc-cli -u jdbc:h2:mem:test -n sa -d org.h2.Driver -j "$H2JAR" test
-roudan-jdbc-cli -u jdbc:h2:mem:test -n sa -d org.h2.Driver -j "$H2JAR" modify -s "CREATE TABLE T(ID INT, NAME VARCHAR)"
-roudan-jdbc-cli -u jdbc:h2:mem:test -n sa -d org.h2.Driver -j "$H2JAR" modify -s "INSERT INTO T VALUES(:id,:name)" --named -a '{"id":1,"name":"hello"}'
-roudan-jdbc-cli -u jdbc:h2:mem:test -n sa -d org.h2.Driver -j "$H2JAR" query -s "SELECT * FROM T"
+rd -u jdbc:h2:mem:test -n sa -d org.h2.Driver -j "$H2JAR" test
+rd -u jdbc:h2:mem:test -n sa -d org.h2.Driver -j "$H2JAR" modify -s "CREATE TABLE T(ID INT, NAME VARCHAR)"
+rd -u jdbc:h2:mem:test -n sa -d org.h2.Driver -j "$H2JAR" modify -s "INSERT INTO T VALUES(:id,:name)" --named -a '{"id":1,"name":"hello"}'
+rd -u jdbc:h2:mem:test -n sa -d org.h2.Driver -j "$H2JAR" query -s "SELECT * FROM T"
+```
+
+## Connection Persistence (login)
+
+Save connection params once, use them everywhere:
+
+```bash
+# Login with YAML config (supports Spring DataSource format)
+rd login -f application-dm.yml -j DmJdbcDriver.jar
+
+# Login with CLI args
+rd -u jdbc:mysql://localhost:3306/test -n root -p pass -d com.mysql.cj.jdbc.Driver -j ./mysql-connector.jar login
+
+# After login, all commands reuse the saved connection:
+rd test
+rd tables
+rd query -s "SELECT * FROM T_USER" --limit 5
 ```
 
 ## Connection Configuration

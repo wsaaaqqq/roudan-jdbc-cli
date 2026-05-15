@@ -3,7 +3,7 @@
 ## 语法
 
 ```bash
-roudan-jdbc-cli count -s <sql> [选项]
+rd count -s <sql> [选项]
 ```
 
 ## 选项
@@ -31,6 +31,6 @@ roudan-jdbc-cli count -s <sql> [选项]
 ## 示例
 
 ```bash
-roudan-jdbc-cli count -s "SELECT * FROM T_USER WHERE age > ?" -a '[18]'
-roudan-jdbc-cli count -s "SELECT * FROM T_USER WHERE status = :st" --named -a '{"st":"ACTIVE"}'
+rd count -s "SELECT * FROM T_USER WHERE age > ?" -a '[18]'
+rd count -s "SELECT * FROM T_USER WHERE status = :st" --named -a '{"st":"ACTIVE"}'
 ```

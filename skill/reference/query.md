@@ -3,8 +3,8 @@
 ## 语法
 
 ```bash
-roudan-jdbc-cli query -s <sql> [选项]
-roudan-jdbc-cli query -f <sql-file> [选项]
+rd query -s <sql> [选项]
+rd query -f <sql-file> [选项]
 ```
 
 ## 选项
@@ -55,14 +55,14 @@ SQL: `SELECT * FROM t WHERE age > :minAge AND name = :userName`
 
 ```bash
 # 基础查询
-roudan-jdbc-cli query -s "SELECT * FROM T_USER" --limit 10
+rd query -s "SELECT * FROM T_USER" --limit 10
 
 # 带参数
-roudan-jdbc-cli query -s "SELECT * FROM T_USER WHERE id=?" -a '["U01"]'
+rd query -s "SELECT * FROM T_USER WHERE id=?" -a '["U01"]'
 
 # 命名参数
-roudan-jdbc-cli query -s "SELECT * FROM T_USER WHERE age > :age" --named -a '{"age":18}' --limit 5
+rd query -s "SELECT * FROM T_USER WHERE age > :age" --named -a '{"age":18}' --limit 5
 
 # 分页
-roudan-jdbc-cli query -s "SELECT * FROM T_USER ORDER BY ID" --page 1 --size 20
+rd query -s "SELECT * FROM T_USER ORDER BY ID" --page 1 --size 20
 ```

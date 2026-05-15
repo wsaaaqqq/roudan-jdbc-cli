@@ -3,7 +3,7 @@
 ## 语法
 
 ```bash
-roudan-jdbc-cli describe -t <table-name>
+rd describe -t <table-name>
 ```
 
 ## 选项
@@ -36,5 +36,5 @@ roudan-jdbc-cli describe -t <table-name>
 ## 示例
 
 ```bash
-roudan-jdbc-cli describe -t T_USER
+rd describe -t T_USER
 ```

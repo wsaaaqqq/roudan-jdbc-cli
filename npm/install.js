@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-const { execSync } = require('child_process');
-const { existsSync, mkdirSync } = require('fs');
+const { execSync, spawnSync } = require('child_process');
+const { existsSync, mkdirSync, writeFileSync, chmodSync, readdirSync, statSync, rmSync } = require('fs');
 const path = require('path');
 const https = require('https');
 const os = require('os');
@@ -8,64 +8,108 @@ const os = require('os');
 const VERSION = '0.1.0';
 const REPO = 'wsaaaqqq/roudan-jdbc-cli';
 const INSTALL_DIR = path.join(os.homedir(), '.roudan-cli');
-const JAR_URL = `https://github.com/${REPO}/releases/download/v${VERSION}/roudan-jdbc-cli.jar`;
 
-function log(msg) { console.log(`[roudan-cli] ${msg}`); }
-function warn(msg) { console.warn(`[warn] ${msg}`); }
+const ADOPTIUM_API = 'https://api.adoptium.net/v3/binary/latest/8/ga';
+
+function log(msg) { console.log(`[roudan-jdbc-cli] ${msg}`); }
 function fail(msg) { console.error(`[error] ${msg}`); process.exit(1); }
 
-(async () => {
-  // Check Java
-  try {
-    execSync('java -version', { stdio: 'pipe' });
-  } catch (e) {
-    fail('Java 8+ is required. Install Java and retry.');
-  }
-
-  // Create directories
-  mkdirSync(path.join(INSTALL_DIR, 'lib'), { recursive: true });
-
-  // Download jar
-  log(`Downloading roudan-jdbc-cli v${VERSION}...`);
-  const jarPath = path.join(INSTALL_DIR, 'lib', 'roudan-jdbc-cli.jar');
-
-  if (existsSync(jarPath)) {
-    log(`Already installed at ${jarPath}`);
-    return;
-  }
-
-  await new Promise((resolve, reject) => {
-    const file = require('fs').createWriteStream(jarPath);
-    https.get(JAR_URL, (res) => {
-      if (res.statusCode === 302) {
-        https.get(res.headers.location, (r2) => {
-          r2.pipe(file);
+function httpGet(url, dest) {
+  return new Promise((resolve, reject) => {
+    const file = require('fs').createWriteStream(dest);
+    const get = (u) => {
+      https.get(u, (res) => {
+        if (res.statusCode === 302 || res.statusCode === 307) {
+          get(res.headers.location);
+        } else if (res.statusCode === 200) {
+          res.pipe(file);
           file.on('finish', () => { file.close(); resolve(); });
-        });
-      } else if (res.statusCode === 200) {
-        res.pipe(file);
-        file.on('finish', () => { file.close(); resolve(); });
-      } else {
-        reject(new Error(`HTTP ${res.statusCode}`));
-      }
-    }).on('error', reject);
+        } else {
+          reject(new Error(`HTTP ${res.statusCode}`));
+        }
+      }).on('error', reject);
+    };
+    get(url);
   });
+}
 
-  // Create wrapper
-  const isWin = process.platform === 'win32';
-  const wrapperName = isWin ? 'roudan-jdbc-cli.cmd' : 'roudan-jdbc-cli';
-  const wrapperPath = path.join(INSTALL_DIR, wrapperName);
-
-  if (isWin) {
-    require('fs').writeFileSync(wrapperPath,
-      `@echo off\r\njava -jar "${jarPath}" %*`);
-  } else {
-    require('fs').writeFileSync(wrapperPath,
-      `#!/bin/sh\nexec java -jar "${jarPath}" "$@"`);
-    require('fs').chmodSync(wrapperPath, '755');
+function findJavaDir(dir) {
+  for (const entry of readdirSync(dir)) {
+    const full = path.join(dir, entry);
+    if (statSync(full).isDirectory()) {
+      const bin = path.join(full, 'bin');
+      if (existsSync(path.join(bin, 'java')) || existsSync(path.join(bin, 'java.exe'))) {
+        return full;
+      }
+      const sub = findJavaDir(full);
+      if (sub) return sub;
+    }
   }
+  return null;
+}
 
-  log(`Installed to ${INSTALL_DIR}`);
-  log(`Run: ${INSTALL_DIR}/${wrapperName} --help`);
-  log(`Add to PATH: export PATH="${INSTALL_DIR}:$PATH"`);
+(async () => {
+  log('Installing roudan-jdbc-cli...');
+
+  const plat = process.platform;
+  const platMap = { win32: 'windows', linux: 'linux', darwin: 'mac' };
+  const adoptOs = platMap[plat];
+  if (!adoptOs) fail(`Unsupported platform: ${plat}`);
+
+  const isWin = plat === 'win32';
+  const jreUrl = `${ADOPTIUM_API}/${adoptOs}/x64/jre/hotspot/normal/eclipse`;
+  const jarUrl = `https://github.com/${REPO}/releases/download/v${VERSION}/roudan-jdbc-cli.jar`;
+
+  mkdirSync(path.join(INSTALL_DIR, 'lib'), { recursive: true });
+  mkdirSync(path.join(INSTALL_DIR, 'jre8'), { recursive: true });
+
+  const tmpDir = path.join(os.tmpdir(), 'roudan-install-' + Date.now());
+  mkdirSync(tmpDir, { recursive: true });
+
+  try {
+    // Download JRE
+    log('Downloading JRE 8 (Adoptium Temurin)...');
+    const jreArchive = path.join(tmpDir, isWin ? 'jre.zip' : 'jre.tar.gz');
+    await httpGet(jreUrl, jreArchive);
+
+    log('Extracting JRE...');
+    const extractDir = path.join(tmpDir, 'extract');
+    mkdirSync(extractDir, { recursive: true });
+
+    if (isWin) {
+      execSync(`powershell -Command "Expand-Archive -Path '${jreArchive}' -DestinationPath '${extractDir}' -Force"`, { stdio: 'pipe' });
+    } else {
+      execSync(`tar xzf "${jreArchive}" -C "${extractDir}" 2>/dev/null`, { stdio: 'pipe' });
+    }
+
+    const javaHome = findJavaDir(extractDir);
+    if (!javaHome) fail('JRE extraction failed: java binary not found.');
+
+    // Copy JRE to INSTALL_DIR/jre8/
+    if (isWin) {
+      execSync(`xcopy /E /I /Y "${javaHome}\\*" "${INSTALL_DIR}\\jre8\\"`, { stdio: 'pipe' });
+    } else {
+      execSync(`cp -R "${javaHome}/"* "${INSTALL_DIR}/jre8/" 2>/dev/null`, { stdio: 'pipe' });
+    }
+
+    // Download jar
+    log('Downloading roudan-jdbc-cli jar...');
+    await httpGet(jarUrl, path.join(INSTALL_DIR, 'lib', 'roudan-jdbc-cli.jar'));
+
+    // Create wrapper
+    if (isWin) {
+      const wrapper = `@echo off\r\nset DIR=%~dp0\r\nset JAVA=%DIR%jre8\\bin\\java.exe\r\nif exist "%JAVA%" (\r\n    "%JAVA%" -jar "%DIR%lib\\roudan-jdbc-cli.jar" %*\r\n) else (\r\n    java -jar "%DIR%lib\\roudan-jdbc-cli.jar" %*\r\n)\r\n`;
+      writeFileSync(path.join(INSTALL_DIR, 'rd.cmd'), wrapper);
+      writeFileSync(path.join(INSTALL_DIR, 'rd.bat'), wrapper);
+    } else {
+      const wrapper = `#!/bin/sh\nDIR="$(dirname "$(readlink -f "$0")")"\nif [ -x "$DIR/jre8/bin/java" ]; then\n  exec "$DIR/jre8/bin/java" -jar "$DIR/lib/roudan-jdbc-cli.jar" "$@"\nelse\n  exec java -jar "$DIR/lib/roudan-jdbc-cli.jar" "$@"\nfi\n`;
+      writeFileSync(path.join(INSTALL_DIR, 'rd'), wrapper);
+      chmodSync(path.join(INSTALL_DIR, 'rd'), '755');
+    }
+
+    log(`Installed to ${INSTALL_DIR}`);
+    log('Installation successful!');
+  } finally {
+    try { rmSync(tmpDir, { recursive: true, force: true }); } catch (_) {}
+  }
 })();

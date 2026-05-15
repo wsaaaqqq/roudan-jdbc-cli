@@ -3,7 +3,7 @@
 ## 语法
 
 ```bash
-roudan-jdbc-cli modify -s <sql> [选项]
+rd modify -s <sql> [选项]
 ```
 
 ## 选项
@@ -37,15 +37,15 @@ DDL 的 `affectedRows` 为 0。
 
 ```bash
 # INSERT - 命名参数
-roudan-jdbc-cli modify -s "INSERT INTO T_USER (id, name) VALUES (:id, :name)" --named -a '{"id":"U01","name":"王五"}'
+rd modify -s "INSERT INTO T_USER (id, name) VALUES (:id, :name)" --named -a '{"id":"U01","name":"王五"}'
 
 # UPDATE - 位置参数
-roudan-jdbc-cli modify -s "UPDATE T_USER SET name=? WHERE id=?" -a '["新名字","U01"]'
+rd modify -s "UPDATE T_USER SET name=? WHERE id=?" -a '["新名字","U01"]'
 
 # DELETE
-roudan-jdbc-cli modify -s "DELETE FROM T_USER WHERE id=?" -a '["U01"]'
+rd modify -s "DELETE FROM T_USER WHERE id=?" -a '["U01"]'
 
 # DDL
-roudan-jdbc-cli modify -s "CREATE TABLE T_LOG (id VARCHAR(32), msg TEXT)"
-roudan-jdbc-cli modify -s "ALTER TABLE T_USER ADD COLUMN email VARCHAR(128)"
+rd modify -s "CREATE TABLE T_LOG (id VARCHAR(32), msg TEXT)"
+rd modify -s "ALTER TABLE T_USER ADD COLUMN email VARCHAR(128)"
 ```

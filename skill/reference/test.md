@@ -3,7 +3,7 @@
 ## 语法
 
 ```bash
-roudan-jdbc-cli test
+rd test
 ```
 
 ## 选项
@@ -36,5 +36,5 @@ roudan-jdbc-cli test
 ## 示例
 
 ```bash
-roudan-jdbc-cli -u jdbc:mysql://localhost:3306/test -n root -p 123456 -d com.mysql.cj.jdbc.Driver -j ./mysql-connector.jar test
+rd -u jdbc:mysql://localhost:3306/test -n root -p 123456 -d com.mysql.cj.jdbc.Driver -j ./mysql-connector.jar test
 ```

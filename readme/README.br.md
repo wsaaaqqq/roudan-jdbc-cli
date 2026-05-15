@@ -45,50 +45,50 @@ curl -fsSL https://raw.githubusercontent.com/wsaaaqqq/roudan-jdbc-cli/main/insta
 # ====== Connection Persistence (login once, use anywhere) ======
 
 # Login with CLI args
-roudan-jdbc-cli -u jdbc:mysql://localhost:3306/test -n root -p pass -d com.mysql.cj.jdbc.Driver -j ./mysql-connector.jar login
+rd -u jdbc:mysql://localhost:3306/test -n root -p pass -d com.mysql.cj.jdbc.Driver -j ./mysql-connector.jar login
 
 # Login with YAML (auto-detect datasource from any nesting level)
-roudan-jdbc-cli login -f application-dm.yml -j DmJdbcDriver.jar
+rd login -f application-dm.yml -j DmJdbcDriver.jar
 
 # Login with multi-datasource YAML, specify which datasource
-roudan-jdbc-cli login -f multi.yml mydb
+rd login -f multi.yml mydb
 
 # After login, all commands omit connection params:
-roudan-jdbc-cli test
-roudan-jdbc-cli tables
-roudan-jdbc-cli query -s "SELECT * FROM T_USER" --limit 5
+rd test
+rd tables
+rd query -s "SELECT * FROM T_USER" --limit 5
 
 # Use a different saved connection
-roudan-jdbc-cli use mydb
+rd use mydb
 
 # One-off use of a saved connection
-roudan-jdbc-cli --name mydb tables
+rd --name mydb tables
 
 # List saved connections
-roudan-jdbc-cli connections
+rd connections
 
 # Logout (clear current connection)
-roudan-jdbc-cli logout
+rd logout
 
 # ====== Direct Connection (one-shot, no login) ======
 
 # Test connection
-roudan-jdbc-cli -u jdbc:mysql://localhost:3306/test -n root -p pass -d com.mysql.cj.jdbc.Driver -j ./mysql-connector.jar test
+rd -u jdbc:mysql://localhost:3306/test -n root -p pass -d com.mysql.cj.jdbc.Driver -j ./mysql-connector.jar test
 
 # Query
-roudan-jdbc-cli query -s "SELECT * FROM T_USER" --limit 5
+rd query -s "SELECT * FROM T_USER" --limit 5
 
 # Named params
-roudan-jdbc-cli query -s "SELECT * FROM T_USER WHERE id = :id" --named -a '{"id":"U01"}'
+rd query -s "SELECT * FROM T_USER WHERE id = :id" --named -a '{"id":"U01"}'
 
 # Insert
-roudan-jdbc-cli modify -s "INSERT INTO T_USER (id, name) VALUES (:id, :name)" --named -a '{"id":"U01","name":"Alice"}'
+rd modify -s "INSERT INTO T_USER (id, name) VALUES (:id, :name)" --named -a '{"id":"U01","name":"Alice"}'
 
 # List tables
-roudan-jdbc-cli tables
+rd tables
 
 # Describe table
-roudan-jdbc-cli describe -t T_USER
+rd describe -t T_USER
 ```
 
 ## Commands
@@ -155,11 +155,11 @@ mvn package
 
 ```
 roudan-jdbc-cli
-  ├── Picocli CLI entry �?parse args
-  ├── ConfigLoader    �?Config merge (YAML + CLI)
-  ├── DriverLoader    �?URLClassLoader dynamically loads JDBC drivers
-  ├── DataSourceFactory �?Register with roudan-core
-  └── CommandExecutor �?RD.query() / RD.modify() / JDBC metadata
+  ├── Picocli CLI entry �?parse args
+  ├── ConfigLoader    �?Config merge (YAML + CLI)
+  ├── DriverLoader    �?URLClassLoader dynamically loads JDBC drivers
+  ├── DataSourceFactory �?Register with roudan-core
+  └── CommandExecutor �?RD.query() / RD.modify() / JDBC metadata
 ```
 
 Built on [roudan-core](https://github.com/wsaaaqqq/xdb).
