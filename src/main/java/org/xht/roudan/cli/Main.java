@@ -34,7 +34,11 @@ import java.util.concurrent.Callable;
                 TestCommand.class,
                 BeginCommand.class,
                 CommitCommand.class,
-                RollbackCommand.class
+                RollbackCommand.class,
+                LoginCommand.class,
+                LogoutCommand.class,
+                UseCommand.class,
+                ConnectionsCommand.class
         }
 )
 public class Main implements Callable<Integer> {
@@ -59,6 +63,9 @@ public class Main implements Callable<Integer> {
 
     @CommandLine.Option(names = "--datasource", defaultValue = "default", description = "Datasource name")
     private String datasourceName;
+
+    @CommandLine.Option(names = "--name", description = "Use a saved connection by name (overrides current)")
+    private String savedName;
 
     @CommandLine.Option(names = {"-o", "--output"}, defaultValue = "json", description = "Output format: json, json-pretty, csv, table")
     private String outputFormat;
@@ -135,12 +142,18 @@ public class Main implements Callable<Integer> {
     public static void init(String configFile, String jdbcUrl, String user, String password,
                             String driverClass, String driverJar, String datasourceName,
                             boolean showSql) throws Exception {
-        init(configFile, jdbcUrl, user, password, driverClass, driverJar, datasourceName, showSql, 30000);
+        init(configFile, jdbcUrl, user, password, driverClass, driverJar, datasourceName, showSql, 30000, null);
     }
 
     public static void init(String configFile, String jdbcUrl, String user, String password,
                             String driverClass, String driverJar, String datasourceName,
                             boolean showSql, int connectTimeout) throws Exception {
+        init(configFile, jdbcUrl, user, password, driverClass, driverJar, datasourceName, showSql, connectTimeout, null);
+    }
+
+    public static void init(String configFile, String jdbcUrl, String user, String password,
+                            String driverClass, String driverJar, String datasourceName,
+                            boolean showSql, int connectTimeout, String savedName) throws Exception {
         CliConfig config;
 
         if (configFile != null && !"default".equals(datasourceName)) {
@@ -160,7 +173,7 @@ public class Main implements Callable<Integer> {
                 throw new IllegalArgumentException("JDBC URL, driver class, and driver JAR are required.");
             }
         } else {
-            config = ConfigLoader.load(configFile, jdbcUrl, user, password, driverClass, driverJar);
+            config = ConfigLoader.load(configFile, jdbcUrl, user, password, driverClass, driverJar, savedName);
         }
 
         CliConfig.Settings settings = config.getSettings();
@@ -176,7 +189,7 @@ public class Main implements Callable<Integer> {
         RESOLVED_USER.set(config.getUser());
         RESOLVED_PASSWORD.set(config.getPassword());
 
-        javax.sql.DataSource ds = DataSourceFactory.create(driver, config.getUrl(), config.getUser(), config.getPassword(), settings, connectTimeout);
+        javax.sql.DataSource ds = DataSourceFactory.create(driver, config.getUrl(), config.getUser(), config.getPassword(), settings, connectTimeout, config.getDriverClass());
         RD.dataSourceConfig(c -> {
             c.addDataSource(ds, datasourceName);
             c.selectDataSourceDefault(datasourceName);

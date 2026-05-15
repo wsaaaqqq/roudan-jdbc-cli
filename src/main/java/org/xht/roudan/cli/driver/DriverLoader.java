@@ -6,6 +6,7 @@ import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.sql.Driver;
+import java.sql.DriverManager;
 
 @Slf4j
 public class DriverLoader {
@@ -21,6 +22,10 @@ public class DriverLoader {
 
         Class<?> clazz = Class.forName(driverClassName, true, loader);
         Driver driver = (Driver) clazz.getDeclaredConstructor().newInstance();
+
+        DriverManager.registerDriver(driver);
+
+        Thread.currentThread().setContextClassLoader(loader);
 
         log.debug("Loaded JDBC driver: {} from {}", driverClassName, driverJarPath);
         return driver;

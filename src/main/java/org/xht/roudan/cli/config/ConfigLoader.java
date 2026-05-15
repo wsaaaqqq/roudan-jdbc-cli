@@ -14,6 +14,12 @@ public class ConfigLoader {
 
     public static CliConfig load(String configFile, String cliUrl, String cliUser,
                                   String cliPassword, String cliDriverClass, String cliDriverJar) throws Exception {
+        return load(configFile, cliUrl, cliUser, cliPassword, cliDriverClass, cliDriverJar, null);
+    }
+
+    public static CliConfig load(String configFile, String cliUrl, String cliUser,
+                                  String cliPassword, String cliDriverClass, String cliDriverJar,
+                                  String savedName) throws Exception {
         CliConfig config = new CliConfig();
 
         if (configFile != null) {
@@ -34,6 +40,7 @@ public class ConfigLoader {
 
         mergeEnv(config);
         mergeCli(config, cliUrl, cliUser, cliPassword, cliDriverClass, cliDriverJar);
+        mergeConnectionStore(config, savedName);
         validate(config);
         return config;
     }
@@ -80,6 +87,24 @@ public class ConfigLoader {
         if (password != null) config.setPassword(password);
         if (driverClass != null) config.setDriverClass(driverClass);
         if (driverJar != null) config.setDriverJar(driverJar);
+    }
+
+    private static void mergeConnectionStore(CliConfig config, String savedName) {
+        if (config.getUrl() != null) return;
+
+        CliConfig saved;
+        if (savedName != null) {
+            saved = ConnectionStore.getByName(savedName);
+        } else {
+            saved = ConnectionStore.getCurrent();
+        }
+        if (saved != null) {
+            if (config.getUrl() == null) config.setUrl(saved.getUrl());
+            if (config.getUser() == null) config.setUser(saved.getUser());
+            if (config.getPassword() == null) config.setPassword(saved.getPassword());
+            if (config.getDriverClass() == null) config.setDriverClass(saved.getDriverClass());
+            if (config.getDriverJar() == null) config.setDriverJar(saved.getDriverJar());
+        }
     }
 
     public static CliConfig.DatasourceConfig loadDatasource(String configFile, String datasourceName) throws Exception {

@@ -52,7 +52,7 @@ public class QueryCommand implements Callable<Integer> {
             Main.init(
                     main.getConfigFile(), main.getJdbcUrl(), main.getUser(),
                     main.getPassword(), main.getDriverClass(), main.getDriverJar(),
-                    main.getDatasourceName(), main.isShowSql(), main.getConnectTimeout()
+                    main.getDatasourceName(), main.isShowSql(), main.getConnectTimeout(), main.getSavedName()
             );
 
             String resolvedSql = sql != null ? sql : cn.hutool.core.io.FileUtil.readUtf8String(sqlFile);

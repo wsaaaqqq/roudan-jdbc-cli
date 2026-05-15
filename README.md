@@ -39,6 +39,36 @@ curl -fsSL https://raw.githubusercontent.com/wsaaaqqq/roudan-jdbc-cli/main/insta
 ### Usage
 
 ```bash
+# ====== Connection Persistence (login once, use anywhere) ======
+
+# Login with CLI args
+roudan-jdbc-cli -u jdbc:mysql://localhost:3306/test -n root -p pass -d com.mysql.cj.jdbc.Driver -j ./mysql-connector.jar login
+
+# Login with YAML (auto-detect datasource from any nesting level)
+roudan-jdbc-cli login -f application-dm.yml -j DmJdbcDriver.jar
+
+# Login with multi-datasource YAML, specify which datasource
+roudan-jdbc-cli login -f multi.yml mydb
+
+# After login, all commands omit connection params:
+roudan-jdbc-cli test
+roudan-jdbc-cli tables
+roudan-jdbc-cli query -s "SELECT * FROM T_USER" --limit 5
+
+# Use a different saved connection
+roudan-jdbc-cli use mydb
+
+# One-off use of a saved connection
+roudan-jdbc-cli --name mydb tables
+
+# List saved connections
+roudan-jdbc-cli connections
+
+# Logout (clear current connection)
+roudan-jdbc-cli logout
+
+# ====== Direct Connection (one-shot, no login) ======
+
 # Test connection
 roudan-jdbc-cli -u jdbc:mysql://localhost:3306/test -n root -p pass -d com.mysql.cj.jdbc.Driver -j ./mysql-connector.jar test
 
@@ -62,6 +92,10 @@ roudan-jdbc-cli describe -t T_USER
 
 | Command | Description |
 |---------|------------|
+| `login` | Save connection for reuse (CLI args or `-f yml`) |
+| `logout` | Clear current saved connection |
+| `use` | Switch to a saved connection by name |
+| `connections` | List all saved connections |
 | `query` | SELECT query |
 | `count` | COUNT query |
 | `modify` | INSERT/UPDATE/DELETE/DDL |
@@ -71,6 +105,15 @@ roudan-jdbc-cli describe -t T_USER
 | `begin` | Start transaction |
 | `commit` | Commit transaction |
 | `rollback` | Rollback transaction |
+| `--name <name>` | (global) One-off use of a saved connection |
+
+### Config Priority
+
+```
+CLI args (highest) > Environment variables > Saved connections > YAML config files
+```
+
+The `login` command saves connection parameters to `~/.roudan/connections.json`. After login, all subsequent commands reuse the saved connection automatically.
 
 Full reference: [CLI_REFERENCE.md](doc/CLI_REFERENCE.md)
 

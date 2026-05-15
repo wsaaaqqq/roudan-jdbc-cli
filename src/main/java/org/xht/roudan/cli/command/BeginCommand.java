@@ -25,7 +25,7 @@ public class BeginCommand implements Callable<Integer> {
             Main.init(
                     main.getConfigFile(), main.getJdbcUrl(), main.getUser(),
                     main.getPassword(), main.getDriverClass(), main.getDriverJar(),
-                    main.getDatasourceName(), main.isShowSql(), main.getConnectTimeout()
+                    main.getDatasourceName(), main.isShowSql(), main.getConnectTimeout(), main.getSavedName()
             );
 
             RDConfig.setAutoClose(false);

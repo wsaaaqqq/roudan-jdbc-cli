@@ -19,26 +19,32 @@ import java.util.logging.Logger;
 public class DataSourceFactory {
 
     public static DataSource create(Driver driver, String url, String user, String password) throws Exception {
-        return create(driver, url, user, password, null, 30000);
+        return create(driver, url, user, password, null, 30000, null);
     }
 
     public static DataSource create(Driver driver, String url, String user, String password,
-                                     CliConfig.Settings settings) throws Exception {
-        return create(driver, url, user, password, settings, settings != null ? (int)settings.getConnectionTimeout() : 10000);
+                                      CliConfig.Settings settings) throws Exception {
+        return create(driver, url, user, password, settings, settings != null ? (int)settings.getConnectionTimeout() : 10000, null);
     }
 
     public static DataSource create(Driver driver, String url, String user, String password,
-                                     CliConfig.Settings settings, int connectTimeout) throws Exception {
+                                      CliConfig.Settings settings, int connectTimeout) throws Exception {
+        return create(driver, url, user, password, settings, connectTimeout, null);
+    }
+
+    public static DataSource create(Driver driver, String url, String user, String password,
+                                      CliConfig.Settings settings, int connectTimeout, String driverClassName) throws Exception {
         log.debug("Creating DataSource for: {}", url);
-        return createHikari(url, user, password, settings, connectTimeout);
+        return createHikari(url, user, password, settings, connectTimeout, driverClassName);
     }
 
     private static HikariDataSource createHikari(String url, String user, String password,
-                                                  CliConfig.Settings settings, int connectTimeout) {
+                                                   CliConfig.Settings settings, int connectTimeout, String driverClassName) {
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(url);
         if (StrUtil.isNotBlank(user)) config.setUsername(user);
         if (password != null) config.setPassword(password);
+        if (StrUtil.isNotBlank(driverClassName)) config.setDriverClassName(driverClassName);
         if (settings != null) {
             config.setMaximumPoolSize(settings.getMaxPoolSize());
             config.setMinimumIdle(settings.getMinIdle());

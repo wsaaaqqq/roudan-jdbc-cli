@@ -39,6 +39,36 @@ curl -fsSL https://raw.githubusercontent.com/wsaaaqqq/roudan-jdbc-cli/main/insta
 ### 使用
 
 ```bash
+# ====== 连接持久化（登录一次，随处可用） ======
+
+# 通过命令行参数登录
+roudan-jdbc-cli -u jdbc:mysql://localhost:3306/test -n root -p pass -d com.mysql.cj.jdbc.Driver -j ./mysql-connector.jar login
+
+# 通过 YAML 文件登录（自动识别任意层级的 driver-class-name）
+roudan-jdbc-cli login -f application-dm.yml -j DmJdbcDriver.jar
+
+# 多数据源 YAML，指定数据源名称
+roudan-jdbc-cli login -f multi.yml mydb
+
+# 登录后，后续命令无需再传连接参数：
+roudan-jdbc-cli test
+roudan-jdbc-cli tables
+roudan-jdbc-cli query -s "SELECT * FROM T_USER" --limit 5
+
+# 切换到另一个已保存的连接
+roudan-jdbc-cli use mydb
+
+# 临时使用某个已保存的连接
+roudan-jdbc-cli --name mydb tables
+
+# 列出已保存的连接
+roudan-jdbc-cli connections
+
+# 登出（清除当前连接）
+roudan-jdbc-cli logout
+
+# ====== 直连模式（单次执行，不保存连接） ======
+
 # 测试连接
 roudan-jdbc-cli -u jdbc:mysql://localhost:3306/test -n root -p pass -d com.mysql.cj.jdbc.Driver -j ./mysql-connector.jar test
 
@@ -62,6 +92,10 @@ roudan-jdbc-cli describe -t T_USER
 
 | 命令 | 功能 |
 |------|------|
+| `login` | 保存连接供后续复用（支持 `-f yml` 和命令行参数） |
+| `logout` | 清除当前已保存的连接 |
+| `use` | 切换到另一个已保存的连接 |
+| `connections` | 列出所有已保存的连接 |
 | `query` | SELECT 查询 |
 | `count` | 计数查询 |
 | `modify` | INSERT/UPDATE/DELETE/DDL |
@@ -71,6 +105,15 @@ roudan-jdbc-cli describe -t T_USER
 | `begin` | 开始事务 |
 | `commit` | 提交事务 |
 | `rollback` | 回滚事务 |
+| `--name <name>` | （全局选项）临时使用某个已保存的连接 |
+
+### 配置优先级
+
+```
+命令行参数（最高）> 环境变量 > 已保存连接 > YAML 配置文件
+```
+
+`login` 命令将连接参数保存到 `~/.roudan/connections.json`。登录后，后续所有命令自动复用已保存的连接。
 
 详细用法见 [CLI_REFERENCE.md](doc/CLI_REFERENCE.md)
 

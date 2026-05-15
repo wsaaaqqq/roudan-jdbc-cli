@@ -29,7 +29,7 @@ public class DescribeCommand implements Callable<Integer> {
         try {
             Main.init(main.getConfigFile(), main.getJdbcUrl(), main.getUser(),
                     main.getPassword(), main.getDriverClass(), main.getDriverJar(),
-                    main.getDatasourceName(), main.isShowSql(), main.getConnectTimeout());
+                    main.getDatasourceName(), main.isShowSql(), main.getConnectTimeout(), main.getSavedName());
 
             List<Map<String, Object>> columns = new ArrayList<>();
             Set<String> pkColumns = new HashSet<>();
