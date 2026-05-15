@@ -5,7 +5,7 @@ const path = require('path');
 const https = require('https');
 const os = require('os');
 
-const VERSION = '0.1.0';
+const VERSION = '0.2.0';
 const REPO = 'wsaaaqqq/roudan-jdbc-cli';
 const INSTALL_DIR = path.join(os.homedir(), '.roudan-cli');
 
