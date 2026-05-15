@@ -6,6 +6,7 @@ import cn.hutool.json.JSONUtil;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -337,6 +338,7 @@ public class H2IntegrationTest {
 
     @Test
     public void testEnvUrlDiscovery() throws Exception {
+        assumeJava8();
         setEnvVar("ROUDAN_JDBC_URL", H2_URL);
         setEnvVar("ROUDAN_JDBC_DRIVER", H2_DRIVER);
         setEnvVar("ROUDAN_JDBC_DRIVER_JAR", H2_JAR);
@@ -348,6 +350,7 @@ public class H2IntegrationTest {
 
     @Test
     public void testEnvUserDiscovery() throws Exception {
+        assumeJava8();
         setEnvVar("ROUDAN_JDBC_URL", H2_URL);
         setEnvVar("ROUDAN_JDBC_USER", "envuser");
         setEnvVar("ROUDAN_JDBC_DRIVER", H2_DRIVER);
@@ -585,6 +588,11 @@ public class H2IntegrationTest {
         JSONObject r = JSONUtil.parseObj(output);
         assertFalse(r.getBool("success"));
         assertEquals(expectedErrorCode, r.getStr("errorCode"));
+    }
+
+    private void assumeJava8() {
+        String ver = System.getProperty("java.version");
+        Assume.assumeTrue("Env var reflection only works on Java 8", ver.startsWith("1.8"));
     }
 
     // ==================== reflection helpers ====================

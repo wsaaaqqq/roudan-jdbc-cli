@@ -2,6 +2,7 @@ package org.xht.roudan.cli.command;
 
 import org.xht.roudan.cli.Main;
 import org.xht.roudan.cli.output.ResultWriter;
+import org.xht.rd.RDConfig;
 import picocli.CommandLine;
 
 import java.sql.Connection;
@@ -34,6 +35,7 @@ public class CommitCommand implements Callable<Integer> {
             conn.commit();
             conn.close();
             Main.clearTxConnection();
+            RDConfig.setAutoClose(true);
 
             long elapsed = System.currentTimeMillis() - start;
             ResultWriter.printResult(r -> {
@@ -44,6 +46,7 @@ public class CommitCommand implements Callable<Integer> {
             return 0;
         } catch (Exception e) {
             Main.clearTxConnection();
+            RDConfig.setAutoClose(true);
             ResultWriter.printError(e, System.currentTimeMillis() - start);
             return 1;
         }
