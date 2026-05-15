@@ -2,6 +2,20 @@
 
 JDBC 数据库 CLI 工具，专为 AI agent 通过 subprocess 调用设计。输入命令行参数，输出 JSON 到 stdout。
 
+## 一键激活（给 AI Agent 的提示词）
+
+复制下面这行，发给 OpenCode / Claude Code / Cursor：
+
+> Install and use roudan-jdbc-cli, a JDBC CLI that lets me execute SQL against any database:  
+> https://raw.githubusercontent.com/wsaaaqqq/roudan-jdbc-cli/main/INSTALL.md
+
+或者一步到位：
+
+```bash
+# 复制这整个代码块给 AI agent
+curl -fsSL https://raw.githubusercontent.com/wsaaaqqq/roudan-jdbc-cli/main/INSTALL.md
+```
+
 ## 快速开始
 
 ### 前置要求
