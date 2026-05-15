@@ -126,12 +126,6 @@ public class ConfigLoader {
         if (config.getUrl() == null) {
             throw new IllegalArgumentException("JDBC URL is required. Provide -u or configure in YAML.");
         }
-        if (config.getDriverClass() == null) {
-            throw new IllegalArgumentException("JDBC driver class is required. Provide -d or configure in YAML.");
-        }
-        if (config.getDriverJar() == null) {
-            throw new IllegalArgumentException("JDBC driver JAR path is required. Provide -j or configure in YAML.");
-        }
     }
 
     private static String getEnv(String key) {

@@ -7,7 +7,9 @@ import org.xht.roudan.cli.command.*;
 import org.xht.roudan.cli.config.CliConfig;
 import org.xht.roudan.cli.config.ConfigLoader;
 import org.xht.roudan.cli.datasource.DataSourceFactory;
+import org.xht.roudan.cli.driver.DriverDownloader;
 import org.xht.roudan.cli.driver.DriverLoader;
+import org.xht.roudan.cli.driver.DriverRegistry;
 import org.xht.roudan.cli.output.ResultWriter;
 import org.xht.rd.RD;
 import org.xht.rd.RDConfig;
@@ -15,6 +17,7 @@ import picocli.CommandLine;
 
 import java.sql.Connection;
 import java.sql.Driver;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 @Slf4j
@@ -39,7 +42,12 @@ import java.util.concurrent.Callable;
                 LoginCommand.class,
                 LogoutCommand.class,
                 UseCommand.class,
-                ConnectionsCommand.class
+                ConnectionsCommand.class,
+                DemoCommand.class,
+                CommandLine.HelpCommand.class,
+                UpdateCommand.class,
+                DrvCommand.class,
+                EnvCommand.class
         }
 )
 public class Main implements Callable<Integer> {
@@ -86,6 +94,9 @@ public class Main implements Callable<Integer> {
     @CommandLine.Option(names = "--dry-run", description = "Print SQL without executing")
     private boolean dryRun;
 
+    @CommandLine.Option(names = "--gen-completion", description = "Generate shell completion script (output to stdout)")
+    private boolean genCompletion;
+
     private static final ThreadLocal<Connection> TX_CONNECTION = new ThreadLocal<>();
 
     public static Connection getTxConnection() {
@@ -119,9 +130,25 @@ public class Main implements Callable<Integer> {
     }
 
     @Override
-    public Integer call() {
+    public Integer call() throws Exception {
+        if (genCompletion) {
+            printBashCompletion();
+            return 0;
+        }
         CommandLine.usage(this, System.err);
         return 0;
+    }
+
+    private void printBashCompletion() {
+        System.out.println("# rd bash completion");
+        System.out.println("_rd_completion() {");
+        System.out.println("  local cur=${COMP_WORDS[COMP_CWORD]}");
+        System.out.println("  local prev=${COMP_WORDS[COMP_CWORD-1]}");
+        System.out.println("  if [ $COMP_CWORD -eq 1 ]; then");
+        System.out.println("    COMPREPLY=($(compgen -W \"query count modify tables describe test begin commit rollback login logout use connections demo help update drv env\" -- \"$cur\"))");
+        System.out.println("  fi");
+        System.out.println("}");
+        System.out.println("complete -F _rd_completion rd roudan-jdbc-cli");
     }
 
     public static class ErrorHandler implements CommandLine.IExecutionExceptionHandler {
@@ -135,8 +162,49 @@ public class Main implements Callable<Integer> {
     public static class ParamErrorHandler implements CommandLine.IParameterExceptionHandler {
         @Override
         public int handleParseException(CommandLine.ParameterException ex, String[] args) {
-            ResultWriter.printParamError(ex.getMessage());
+            String msg = ex.getMessage();
+
+            // Fuzzy match: check if an unknown argument matches a subcommand
+            String unknown = null;
+            if (ex instanceof CommandLine.UnmatchedArgumentException) {
+                java.util.List<String> unmatched = ((CommandLine.UnmatchedArgumentException) ex).getUnmatched();
+                if (unmatched != null && !unmatched.isEmpty()) {
+                    unknown = unmatched.get(0);
+                }
+            } else if (msg != null && msg.contains("'")) {
+                int s = msg.indexOf('\'');
+                int e = msg.indexOf('\'', s + 1);
+                if (s >= 0 && e > s) unknown = msg.substring(s + 1, e);
+            }
+
+            if (unknown != null) {
+                String suggestion = null;
+                int bestDist = Integer.MAX_VALUE;
+                for (java.util.Map.Entry<String, CommandLine> e : ex.getCommandLine().getSubcommands().entrySet()) {
+                    String name = e.getKey();
+                    int dist = levenshtein(unknown.toLowerCase(), name.toLowerCase());
+                    if (dist < bestDist) { bestDist = dist; suggestion = name; }
+                }
+                if (suggestion != null && bestDist <= 3 && !suggestion.equals(unknown)) {
+                    msg = "Unknown command '" + unknown + "'. Did you mean '" + suggestion + "'?";
+                }
+            }
+
+            ResultWriter.printParamError(msg);
             return 1;
+        }
+
+        private static int levenshtein(String a, String b) {
+            int[][] dp = new int[a.length() + 1][b.length() + 1];
+            for (int i = 0; i <= a.length(); i++) dp[i][0] = i;
+            for (int j = 0; j <= b.length(); j++) dp[0][j] = j;
+            for (int i = 1; i <= a.length(); i++) {
+                for (int j = 1; j <= b.length(); j++) {
+                    int cost = a.charAt(i - 1) == b.charAt(j - 1) ? 0 : 1;
+                    dp[i][j] = Math.min(Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1), dp[i - 1][j - 1] + cost);
+                }
+            }
+            return dp[a.length()][b.length()];
         }
     }
 
@@ -170,8 +238,8 @@ public class Main implements Callable<Integer> {
             if (password != null) config.setPassword(password);
             if (driverClass != null) config.setDriverClass(driverClass);
             if (driverJar != null) config.setDriverJar(driverJar);
-            if (config.getUrl() == null || config.getDriverClass() == null || config.getDriverJar() == null) {
-                throw new IllegalArgumentException("JDBC URL, driver class, and driver JAR are required.");
+            if (config.getUrl() == null) {
+                throw new IllegalArgumentException("JDBC URL is required.");
             }
         } else {
             config = ConfigLoader.load(configFile, jdbcUrl, user, password, driverClass, driverJar, savedName);
@@ -183,6 +251,31 @@ public class Main implements Callable<Integer> {
         }
         if (showSql) settings.setShowSql(true);
         RDConfig.setShowSql(settings.isShowSql());
+
+        // Auto-resolve driver class and JAR from JDBC URL
+        if (config.getDriverClass() == null || config.getDriverJar() == null) {
+            DriverRegistry.DriverInfo drvInfo = DriverRegistry.resolve(config.getUrl());
+            if (drvInfo != null) {
+                if (config.getDriverClass() == null) {
+                    config.setDriverClass(drvInfo.getDriverClass());
+                    System.err.println("[rd] Auto-detected driver: " + drvInfo.getDriverClass());
+                }
+                if (config.getDriverJar() == null) {
+                    String cachePath = DriverRegistry.cachePath(drvInfo);
+                    if (new java.io.File(cachePath).exists()) {
+                        config.setDriverJar(cachePath);
+                    } else {
+                        try {
+                            config.setDriverJar(DriverDownloader.download(drvInfo));
+                        } catch (Exception e) {
+                            throw new IllegalArgumentException(
+                                "Cannot auto-download driver for " + config.getUrl() + ": " + e.getMessage() +
+                                ". Provide -d and -j manually.");
+                        }
+                    }
+                }
+            }
+        }
 
         Driver driver = DriverLoader.load(config.getDriverJar(), config.getDriverClass());
         LOADED_DRIVER.set(driver);

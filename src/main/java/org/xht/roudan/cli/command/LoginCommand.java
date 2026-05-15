@@ -160,10 +160,28 @@ public class LoginCommand implements Callable<Integer> {
         if (main.getDriverClass() != null) driverClass = main.getDriverClass();
         if (main.getDriverJar() != null) driverJar = main.getDriverJar();
 
+        // Auto-resolve driver from URL (if missing)
+        if (url != null && (driverClass == null || driverJar == null)) {
+            org.xht.roudan.cli.driver.DriverRegistry.DriverInfo drvInfo = org.xht.roudan.cli.driver.DriverRegistry.resolve(url);
+            if (drvInfo != null) {
+                if (driverClass == null) driverClass = drvInfo.getDriverClass();
+                if (driverJar == null) {
+                    String cp = org.xht.roudan.cli.driver.DriverRegistry.cachePath(drvInfo);
+                    if (new java.io.File(cp).exists()) {
+                        driverJar = cp;
+                    } else if (drvInfo.isOnMavenCentral()) {
+                        try {
+                            driverJar = org.xht.roudan.cli.driver.DriverDownloader.download(drvInfo);
+                        } catch (Exception ignored) {}
+                    }
+                }
+            }
+        }
+
         if (url == null || driverClass == null || driverJar == null) {
             ResultWriter.printResult(r -> {
                 r.put("success", false);
-                r.put("error", "login requires --url, --driver, and --driver-jar (or -f with YAML)");
+                r.put("error", "login requires --url (or -f with YAML). For unknown databases, provide -d and -j.");
                 r.put("errorCode", "PARAM_ERROR");
             }, true);
             return 1;

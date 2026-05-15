@@ -14,16 +14,31 @@ const ADOPTIUM_API = 'https://api.adoptium.net/v3/binary/latest/8/ga';
 function log(msg) { console.log(`[roudan-jdbc-cli] ${msg}`); }
 function fail(msg) { console.error(`[error] ${msg}`); process.exit(1); }
 
-function httpGet(url, dest) {
+function httpGet(url, dest, label) {
   return new Promise((resolve, reject) => {
     const file = require('fs').createWriteStream(dest);
+    let total = 0, downloaded = 0, lastLog = 0;
     const get = (u) => {
       https.get(u, (res) => {
         if (res.statusCode === 302 || res.statusCode === 307) {
           get(res.headers.location);
         } else if (res.statusCode === 200) {
+          total = parseInt(res.headers['content-length']) || 0;
+          res.on('data', (chunk) => {
+            downloaded += chunk.length;
+            const now = Date.now();
+            if (total > 0 && now - lastLog > 500) {
+              const pct = Math.round(downloaded * 100 / total);
+              process.stderr.write(`\r[rd] ${label}... ${pct}%`);
+              lastLog = now;
+            }
+          });
           res.pipe(file);
-          file.on('finish', () => { file.close(); resolve(); });
+          file.on('finish', () => {
+            if (total > 0) process.stderr.write('\r[rd] ' + label + ': done    \n');
+            file.close();
+            resolve();
+          });
         } else {
           reject(new Error(`HTTP ${res.statusCode}`));
         }
@@ -67,10 +82,13 @@ function findJavaDir(dir) {
   mkdirSync(tmpDir, { recursive: true });
 
   try {
-    // Download JRE
-    log('Downloading JRE 8 (Adoptium Temurin)...');
+    // Download JRE and jar in parallel
     const jreArchive = path.join(tmpDir, isWin ? 'jre.zip' : 'jre.tar.gz');
-    await httpGet(jreUrl, jreArchive);
+    const jarPath = path.join(INSTALL_DIR, 'lib', 'roudan-jdbc-cli.jar');
+    await Promise.all([
+      httpGet(jreUrl, jreArchive, 'JRE 8'),
+      httpGet(jarUrl, jarPath, 'CLI jar')
+    ]);
 
     log('Extracting JRE...');
     const extractDir = path.join(tmpDir, 'extract');
@@ -92,10 +110,6 @@ function findJavaDir(dir) {
       execSync(`cp -R "${javaHome}/"* "${INSTALL_DIR}/jre8/" 2>/dev/null`, { stdio: 'pipe' });
     }
 
-    // Download jar
-    log('Downloading roudan-jdbc-cli jar...');
-    await httpGet(jarUrl, path.join(INSTALL_DIR, 'lib', 'roudan-jdbc-cli.jar'));
-
     // Create wrapper
     if (isWin) {
       const wrapper = `@echo off\r\nset DIR=%~dp0\r\nset JAVA=%DIR%jre8\\bin\\java.exe\r\nif exist "%JAVA%" (\r\n    "%JAVA%" -jar "%DIR%lib\\roudan-jdbc-cli.jar" %*\r\n) else (\r\n    java -jar "%DIR%lib\\roudan-jdbc-cli.jar" %*\r\n)\r\n`;
@@ -103,6 +117,9 @@ function findJavaDir(dir) {
       writeFileSync(path.join(INSTALL_DIR, 'rd.bat'), wrapper);
       writeFileSync(path.join(INSTALL_DIR, 'roudan-jdbc-cli.cmd'), wrapper);
       writeFileSync(path.join(INSTALL_DIR, 'roudan-jdbc-cli.bat'), wrapper);
+      // Windows alias: rcli avoids cmd/powershell 'rd' conflict
+      writeFileSync(path.join(INSTALL_DIR, 'rcli.cmd'), wrapper);
+      writeFileSync(path.join(INSTALL_DIR, 'rcli.bat'), wrapper);
     } else {
       const wrapper = `#!/bin/sh\nDIR="$(dirname "$(readlink -f "$0")")"\nif [ -x "$DIR/jre8/bin/java" ]; then\n  exec "$DIR/jre8/bin/java" -jar "$DIR/lib/roudan-jdbc-cli.jar" "$@"\nelse\n  exec java -jar "$DIR/lib/roudan-jdbc-cli.jar" "$@"\nfi\n`;
       writeFileSync(path.join(INSTALL_DIR, 'rd'), wrapper);

@@ -52,12 +52,43 @@ fi
 
 mkdir -p "$INSTALL_DIR/lib" "$INSTALL_DIR/jre8"
 
-# Download JRE
-log "Downloading JRE 8 (Adoptium Temurin)..."
 JRE_TMP_DIR="/tmp/roudan-jre-$$"
 mkdir -p "$JRE_TMP_DIR/extract"
 JRE_ARCHIVE="$JRE_TMP_DIR/jre-archive"
-curl -fsSL -o "$JRE_ARCHIVE" "$JRE_URL" || err "Failed to download JRE."
+JRE_OK="$JRE_TMP_DIR/.jre-ok"
+JAR_OK="$JRE_TMP_DIR/.jar-ok"
+
+rm -f "$JRE_OK" "$JAR_OK"
+
+# Download JRE in background
+log "Downloading JRE 8 (Adoptium Temurin)..."
+(
+    if curl -fL --progress-bar -o "$JRE_ARCHIVE" "$JRE_URL"; then
+        touch "$JRE_OK"
+    fi
+) &
+
+# Download jar in background
+log "Downloading ${BIN_NAME} ${VERSION}..."
+(
+    if curl -fL --progress-bar -o "$INSTALL_DIR/lib/${BIN_NAME}.jar" "$JAR_URL"; then
+        touch "$JAR_OK"
+    fi
+) &
+
+JRE_PID=$!
+JAR_PID=$!
+
+# Wait for both downloads
+wait $JRE_PID $JAR_PID
+
+# Check download results
+if [ ! -f "$JRE_OK" ]; then
+    err "Failed to download JRE."
+fi
+if [ ! -f "$JAR_OK" ]; then
+    err "Failed to download jar."
+fi
 
 # Extract JRE
 if [ "$ADOPT_OS" = "windows" ]; then
@@ -76,10 +107,6 @@ else
 fi
 
 rm -rf "$JRE_TMP_DIR"
-
-# Download jar
-log "Downloading ${BIN_NAME} ${VERSION}..."
-curl -fsSL -o "$INSTALL_DIR/lib/${BIN_NAME}.jar" "$JAR_URL" || err "Failed to download jar."
 
 # Create wrapper script
 WRAPPER="${INSTALL_DIR}/${CMD_NAME}"
@@ -111,6 +138,7 @@ fi
 # Create compatibility alias (roudan-jdbc-cli → rd)
 if [ "$ADOPT_OS" = "windows" ]; then
     cp "${INSTALL_DIR}/${CMD_NAME}.bat" "${INSTALL_DIR}/${BIN_NAME}.bat" 2>/dev/null || true
+    cp "${INSTALL_DIR}/${CMD_NAME}.bat" "${INSTALL_DIR}/rcli.bat" 2>/dev/null || true
 else
     ln -sf "${INSTALL_DIR}/${CMD_NAME}" "${INSTALL_DIR}/${BIN_NAME}" 2>/dev/null || true
 fi
@@ -145,7 +173,7 @@ log "Done!"
 echo ""
 if [ "$ADOPT_OS" = "windows" ]; then
     echo "  Add ${INSTALL_DIR} to PATH manually."
-    echo "  Then run: ${CMD_NAME} --help"
+    echo "  Run: rcli --help  (Use 'rcli' on Windows to avoid cmd/powershell 'rd' conflict)"
 else
     echo "  Restart your shell or run:"
     echo "    export PATH=\"${INSTALL_DIR}:\$PATH\""
