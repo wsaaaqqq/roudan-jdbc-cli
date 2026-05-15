@@ -9,7 +9,8 @@
   },
   "license": "Apache-2.0",
   "bin": {
-    "rd": "./bin/rd.js"
+    "rd": "./bin/rd.js",
+    "roudan-jdbc-cli": "./bin/rd.js"
   },
   "files": [
     "bin/",

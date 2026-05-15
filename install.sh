@@ -108,6 +108,13 @@ WRAPPER_EOF
     chmod +x "$WRAPPER"
 fi
 
+# Create compatibility alias (roudan-jdbc-cli → rd)
+if [ "$ADOPT_OS" = "windows" ]; then
+    cp "${INSTALL_DIR}/${CMD_NAME}.bat" "${INSTALL_DIR}/${BIN_NAME}.bat" 2>/dev/null || true
+else
+    ln -sf "${INSTALL_DIR}/${CMD_NAME}" "${INSTALL_DIR}/${BIN_NAME}" 2>/dev/null || true
+fi
+
 # Add to PATH
 if [ "$ADOPT_OS" != "windows" ]; then
     SHELL_RC=""

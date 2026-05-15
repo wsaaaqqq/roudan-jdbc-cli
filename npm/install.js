@@ -101,10 +101,14 @@ function findJavaDir(dir) {
       const wrapper = `@echo off\r\nset DIR=%~dp0\r\nset JAVA=%DIR%jre8\\bin\\java.exe\r\nif exist "%JAVA%" (\r\n    "%JAVA%" -jar "%DIR%lib\\roudan-jdbc-cli.jar" %*\r\n) else (\r\n    java -jar "%DIR%lib\\roudan-jdbc-cli.jar" %*\r\n)\r\n`;
       writeFileSync(path.join(INSTALL_DIR, 'rd.cmd'), wrapper);
       writeFileSync(path.join(INSTALL_DIR, 'rd.bat'), wrapper);
+      writeFileSync(path.join(INSTALL_DIR, 'roudan-jdbc-cli.cmd'), wrapper);
+      writeFileSync(path.join(INSTALL_DIR, 'roudan-jdbc-cli.bat'), wrapper);
     } else {
       const wrapper = `#!/bin/sh\nDIR="$(dirname "$(readlink -f "$0")")"\nif [ -x "$DIR/jre8/bin/java" ]; then\n  exec "$DIR/jre8/bin/java" -jar "$DIR/lib/roudan-jdbc-cli.jar" "$@"\nelse\n  exec java -jar "$DIR/lib/roudan-jdbc-cli.jar" "$@"\nfi\n`;
       writeFileSync(path.join(INSTALL_DIR, 'rd'), wrapper);
       chmodSync(path.join(INSTALL_DIR, 'rd'), '755');
+      writeFileSync(path.join(INSTALL_DIR, 'roudan-jdbc-cli'), wrapper);
+      chmodSync(path.join(INSTALL_DIR, 'roudan-jdbc-cli'), '755');
     }
 
     log(`Installed to ${INSTALL_DIR}`);
