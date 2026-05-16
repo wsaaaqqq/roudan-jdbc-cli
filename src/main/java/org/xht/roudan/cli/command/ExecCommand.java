@@ -14,7 +14,7 @@ import java.util.concurrent.Callable;
 
 @CommandLine.Command(
         name = "exec",
-        description = "Execute SQL file as a single transaction (auto commit/rollback)"
+        description = "Execute SQL statements in a single connection"
 )
 public class ExecCommand implements Callable<Integer> {
 
@@ -26,6 +26,9 @@ public class ExecCommand implements Callable<Integer> {
 
     @CommandLine.Option(names = {"-s", "--sql"}, description = "Inline SQL statements (separated by ;)")
     private String sql;
+
+    @CommandLine.Option(names = "--mode", defaultValue = "transaction", description = "Execution mode: transaction (default, all-or-nothing) or auto (each stmt auto-committed)")
+    private String mode;
 
     @CommandLine.Option(names = "--dry-run", description = "Parse SQL without executing")
     private boolean dryRun;
@@ -57,13 +60,20 @@ public class ExecCommand implements Callable<Integer> {
                 return 0;
             }
 
-            long execStart = System.currentTimeMillis();
+            boolean isTransaction = "transaction".equalsIgnoreCase(mode);
+
             Connection conn = RD.getConnection();
             boolean originalAutoCommit = conn.getAutoCommit();
-            conn.setAutoCommit(false);
+            if (isTransaction) {
+                conn.setAutoCommit(false);
+            }
 
             try {
                 List<Map<String, Object>> results = new ArrayList<>();
+                boolean allSucceeded = true;
+                int failedIndex = -1;
+                String failedError = null;
+
                 for (int i = 0; i < stmts.size(); i++) {
                     final int stmtIdx = i;
                     String stmt = stmts.get(i);
@@ -71,35 +81,56 @@ public class ExecCommand implements Callable<Integer> {
                     result.put("statementIndex", stmtIdx);
                     result.put("sql", stmt);
                     results.add(result);
-                    if (!Boolean.TRUE.equals(result.get("success"))) {
-                        conn.rollback();
-                        conn.setAutoCommit(originalAutoCommit);
-                        long elapsed = System.currentTimeMillis() - start;
-                        ResultWriter.printResult(r -> {
-                            r.put("success", false);
-                            r.put("statementIndex", stmtIdx);
-                            r.put("rolledBack", true);
-                            r.put("error", result.get("error"));
-                            r.put("errorCode", result.get("errorCode"));
-                            r.put("partialResults", results);
-                            r.put("timeMs", elapsed);
-                        }, main.isPretty());
-                        return 1;
+
+                    if (!Boolean.TRUE.equals(result.get("success")) && allSucceeded) {
+                        allSucceeded = false;
+                        failedIndex = stmtIdx;
+                        failedError = (String) result.get("error");
+                        if (isTransaction) {
+                            break;
+                        }
                     }
                 }
-                conn.commit();
-                conn.setAutoCommit(originalAutoCommit);
+
+                if (isTransaction) {
+                    if (allSucceeded) {
+                        conn.commit();
+                    } else {
+                        conn.rollback();
+                    }
+                    conn.setAutoCommit(originalAutoCommit);
+                }
+
                 long elapsed = System.currentTimeMillis() - start;
-                ResultWriter.printResult(r -> {
-                    r.put("success", true);
-                    r.put("statementCount", stmts.size());
-                    r.put("results", results);
-                    r.put("timeMs", elapsed);
-                }, main.isPretty());
-                return 0;
+                final boolean finalAllOk = allSucceeded;
+                final int finalFailIdx = failedIndex;
+                final String finalFailErr = failedError;
+                if (!allSucceeded && isTransaction) {
+                    ResultWriter.printResult(r -> {
+                        r.put("success", false);
+                        r.put("statementIndex", finalFailIdx);
+                        r.put("rolledBack", true);
+                        r.put("error", finalFailErr);
+                        r.put("errorCode", "SQL_ERROR");
+                        r.put("partialResults", results);
+                        r.put("timeMs", elapsed);
+                    }, main.isPretty());
+                    return 1;
+                } else {
+                    ResultWriter.printResult(r -> {
+                        r.put("success", true);
+                        r.put("mode", mode);
+                        r.put("statementCount", stmts.size());
+                        r.put("results", results);
+                        r.put("timeMs", elapsed);
+                    }, main.isPretty());
+                    return finalAllOk ? 0 : 1;
+                }
             } catch (Exception e) {
-                try { conn.rollback(); } catch (Exception ignored) {}
-                conn.setAutoCommit(originalAutoCommit);
+                if (isTransaction) {
+                    try { conn.rollback(); } catch (Exception ignored) {}
+                    conn.setAutoCommit(originalAutoCommit);
+                }
                 throw e;
             }
         } catch (Exception e) {

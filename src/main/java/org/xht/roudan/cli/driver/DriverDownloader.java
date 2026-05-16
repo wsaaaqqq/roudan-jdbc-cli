@@ -21,18 +21,31 @@ public class DriverDownloader {
                     "Download the JAR manually and use -j to specify its path.");
         }
 
-        String jarPath = DriverRegistry.cachePath(info);
+        StringBuilder allPaths = new StringBuilder();
+
+        String primaryPath = downloadJar(info.getMavenGroup(), info.getMavenArtifact(), info.getMavenVersion(),
+                info.getMavenArtifact() + " " + info.getMavenVersion());
+        allPaths.append(primaryPath);
+
+        for (String[] dep : info.getExtraDependencies()) {
+            String depPath = downloadJar(dep[0], dep[1], dep[2], dep[1] + " " + dep[2]);
+            allPaths.append(";").append(depPath);
+        }
+
+        return allPaths.toString();
+    }
+
+    private static String downloadJar(String group, String artifact, String version, String label) throws Exception {
+        String jarPath = DriverRegistry.cachePathExtra(group, artifact, version);
         File jarFile = new File(jarPath);
         if (jarFile.exists()) {
             return jarPath;
         }
 
-        String downloadUrl = DriverRegistry.mavenUrl(info);
-        if (downloadUrl == null) throw new IllegalArgumentException("Cannot resolve Maven download URL");
-
+        String downloadUrl = DriverRegistry.mavenUrlExtra(group, artifact, version);
         FileUtil.mkdir(jarFile.getParentFile());
 
-        System.err.print("[driver] Downloading " + info.getMavenArtifact() + " " + info.getMavenVersion() + "... ");
+        System.err.print("[driver] Downloading " + label + "... ");
         System.err.flush();
 
         HttpURLConnection conn = (HttpURLConnection) new URL(downloadUrl).openConnection();
@@ -42,17 +55,8 @@ public class DriverDownloader {
 
         int status = conn.getResponseCode();
         if (status != 200) {
-            // Try with full classifier: artifact-version.jar  (for some artifacts like mssql-jdbc)
-            String altUrl = DriverRegistry.mavenUrl(info).replace(".jar", ".jar");
-            conn = (HttpURLConnection) new URL(altUrl).openConnection();
-            conn.setConnectTimeout(15000);
-            conn.setReadTimeout(30000);
-            conn.setInstanceFollowRedirects(true);
-            status = conn.getResponseCode();
-            if (status != 200) {
-                System.err.println("FAILED (HTTP " + status + ")");
-                throw new RuntimeException("Failed to download driver from Maven Central: HTTP " + status);
-            }
+            System.err.println("FAILED (HTTP " + status + ")");
+            throw new RuntimeException("Failed to download " + label + " from Maven Central: HTTP " + status);
         }
 
         int totalBytes = conn.getContentLength();
@@ -67,14 +71,14 @@ public class DriverDownloader {
                 long now = System.currentTimeMillis();
                 if (totalBytes > 0 && now - lastPrint > 500) {
                     int pct = (int) ((long) downloaded * 100 / totalBytes);
-                    System.err.print("\r[driver] Downloading " + info.getMavenArtifact() + " " + info.getMavenVersion() + "... " + pct + "%  ");
+                    System.err.print("\r[driver] Downloading " + label + "... " + pct + "%  ");
                     System.err.flush();
                     lastPrint = now;
                 }
             }
         }
 
-        System.err.println("\r[driver] Downloaded " + info.getMavenArtifact() + " " + info.getMavenVersion() + " (" + FileUtil.readableFileSize(jarFile) + ")   ");
+        System.err.println("\r[driver] Downloaded " + label + " (" + FileUtil.readableFileSize(jarFile) + ")   ");
         System.err.flush();
 
         if (!jarFile.exists()) {

@@ -28,9 +28,9 @@ public class UpdateCommand implements Callable<Integer> {
     public Integer call() throws Exception {
         long start = System.currentTimeMillis();
         String ver = targetVersion != null ? targetVersion : "latest";
-        String url = "https://github.com/wsaaaqqq/roudan-jdbc-cli/releases/" +
-                (ver.equals("latest") ? "latest" : "download/v" + ver) +
-                "/download/roudan-jdbc-cli.jar";
+        String url = ver.equals("latest")
+                ? "https://github.com/wsaaaqqq/roudan-jdbc-cli/releases/latest/download/roudan-jdbc-cli.jar"
+                : "https://github.com/wsaaaqqq/roudan-jdbc-cli/releases/download/v" + ver + "/roudan-jdbc-cli.jar";
 
         String home = System.getProperty("user.home");
         Path jarPath = Paths.get(home, ".roudan-cli", "lib", "roudan-jdbc-cli.jar");

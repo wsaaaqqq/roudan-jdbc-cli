@@ -28,7 +28,7 @@ import java.util.concurrent.Callable;
         aliases = {"roudan-jdbc-cli"},
         description = "JDBC CLI tool for AI agents",
         mixinStandardHelpOptions = true,
-        version = "0.3.0",
+        version = "0.4.0",
         subcommands = {
                 QueryCommand.class,
                 CountCommand.class,
@@ -45,6 +45,10 @@ import java.util.concurrent.Callable;
                 ConnectionsCommand.class,
                 DemoCommand.class,
                 ExecCommand.class,
+                ImportCommand.class,
+                ExportCommand.class,
+                GenCommand.class,
+                TailCommand.class,
                 CommandLine.HelpCommand.class,
                 UpdateCommand.class,
                 DrvCommand.class,
@@ -146,7 +150,7 @@ public class Main implements Callable<Integer> {
         System.out.println("  local cur=${COMP_WORDS[COMP_CWORD]}");
         System.out.println("  local prev=${COMP_WORDS[COMP_CWORD-1]}");
         System.out.println("  if [ $COMP_CWORD -eq 1 ]; then");
-        System.out.println("    COMPREPLY=($(compgen -W \"query count modify tables describe test begin commit rollback login logout use connections demo exec help update drv env\" -- \"$cur\"))");
+        System.out.println("    COMPREPLY=($(compgen -W \"query count modify tables describe test begin commit rollback login logout use connections demo exec import export gen tail help update drv env\" -- \"$cur\"))");
         System.out.println("  fi");
         System.out.println("}");
         System.out.println("complete -F _rd_completion rd roudan-jdbc-cli");
@@ -186,7 +190,11 @@ public class Main implements Callable<Integer> {
                     int dist = levenshtein(unknown.toLowerCase(), name.toLowerCase());
                     if (dist < bestDist) { bestDist = dist; suggestion = name; }
                 }
-                if (suggestion != null && bestDist <= 3 && !suggestion.equals(unknown)) {
+                // Prefer prefix match first, then fall back to Levenshtein ≤ 2
+                if (suggestion != null && unknown.length() >= 2 && suggestion.toLowerCase().startsWith(unknown.toLowerCase())) {
+                    bestDist = 0;
+                }
+                if (suggestion != null && bestDist <= 2 && !suggestion.equals(unknown)) {
                     msg = "Unknown command '" + unknown + "'. Did you mean '" + suggestion + "'?";
                 }
             }
@@ -262,9 +270,12 @@ public class Main implements Callable<Integer> {
                     System.err.println("[rd] Auto-detected driver: " + drvInfo.getDriverClass());
                 }
                 if (config.getDriverJar() == null) {
-                    String cachePath = DriverRegistry.cachePath(drvInfo);
-                    if (new java.io.File(cachePath).exists()) {
-                        config.setDriverJar(cachePath);
+                    if (DriverRegistry.isFullyCached(drvInfo)) {
+                        StringBuilder cached = new StringBuilder(DriverRegistry.cachePath(drvInfo));
+                        for (String[] dep : drvInfo.getExtraDependencies()) {
+                            cached.append(";").append(DriverRegistry.cachePathExtra(dep[0], dep[1], dep[2]));
+                        }
+                        config.setDriverJar(cached.toString());
                     } else {
                         try {
                             config.setDriverJar(DriverDownloader.download(drvInfo));
