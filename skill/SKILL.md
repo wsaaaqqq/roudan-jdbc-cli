@@ -103,6 +103,28 @@ rd describe -t T_USER
 
 输出：`{"success":true,"table":"T_USER","columns":[{"name":"ID","type":"VARCHAR","size":32,"nullable":false,"pk":true}],"timeMs":3}`
 
+#### `exec` — 执行 SQL 文件（事务）
+
+```bash
+rd exec -f script.sql
+rd exec -s "INSERT INTO t VALUES(1); SELECT * FROM t"
+rd exec -f script.sql --dry-run
+```
+
+在一个连接中自动执行多条 SQL 语句（`autoCommit=false`），全部成功时 COMMIT，任意一条失败时 ROLLBACK。
+
+参数：`-f/--file <path>` SQL 文件路径，`-s/--sql <text>` 内联 SQL（与 `-f` 互斥），`--dry-run` 只解析不执行。
+
+输出（成功）：
+```json
+{"success":true,"statementCount":2,"results":[{"success":true,"type":"update","affectedRows":1},{"success":true,"type":"query","rowCount":1}],"timeMs":25}
+```
+
+输出（失败，自动回滚）：
+```json
+{"success":false,"statementIndex":1,"rolledBack":true,"error":"SQLException: ...","partialResults":[{"success":true,"type":"update","affectedRows":1}],"timeMs":30}
+```
+
 #### `test` — 连接测试
 
 ```bash

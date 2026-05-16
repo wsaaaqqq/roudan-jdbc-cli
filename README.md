@@ -84,6 +84,13 @@ rd tables
 
 # Describe table
 rd describe -t T_USER
+
+# Execute SQL file as single transaction
+rd exec -f script.sql
+rd exec -s "INSERT INTO t VALUES(1); INSERT INTO t VALUES(2); SELECT * FROM t"
+
+# Execute SQL file with dry-run (parse only)
+rd exec -f script.sql --dry-run
 ```
 
 ## Commands
@@ -100,6 +107,7 @@ rd describe -t T_USER
 | `tables` | List tables/views |
 | `describe` | Show table schema |
 | `test` | Connection test |
+| `exec` | Execute SQL file as single transaction (auto commit/rollback) |
 | `begin` | Start transaction |
 | `commit` | Commit transaction |
 | `rollback` | Rollback transaction |
