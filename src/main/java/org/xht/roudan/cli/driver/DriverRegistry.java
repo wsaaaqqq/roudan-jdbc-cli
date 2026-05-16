@@ -28,7 +28,7 @@ public class DriverRegistry {
     private static final Map<String, DriverInfo> REGISTRY = new LinkedHashMap<>();
 
     static {
-        reg("jdbc:mysql://",       "com.mysql.cj.jdbc.Driver",          "mysql", "mysql-connector-java", "8.0.33", true);
+        reg("jdbc:mysql://",       "com.mysql.cj.jdbc.Driver",          "mysql", "mysql-connector-j", "9.2.0", true);
         reg("jdbc:postgresql://",  "org.postgresql.Driver",             "org.postgresql", "postgresql", "42.7.4", true);
         reg("jdbc:oracle:thin:@",  "oracle.jdbc.OracleDriver",          "com.oracle.database.jdbc", "ojdbc8", "21.15.0.0", true);
         reg("jdbc:sqlserver://",   "com.microsoft.sqlserver.jdbc.SQLServerDriver", "com.microsoft.sqlserver", "mssql-jdbc", "12.8.1.jre8", true);

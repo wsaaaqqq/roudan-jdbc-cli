@@ -28,7 +28,7 @@ import java.util.concurrent.Callable;
         aliases = {"roudan-jdbc-cli"},
         description = "JDBC CLI tool for AI agents",
         mixinStandardHelpOptions = true,
-        version = "0.2.0",
+        version = "0.3.0",
         subcommands = {
                 QueryCommand.class,
                 CountCommand.class,
@@ -44,6 +44,7 @@ import java.util.concurrent.Callable;
                 UseCommand.class,
                 ConnectionsCommand.class,
                 DemoCommand.class,
+                ExecCommand.class,
                 CommandLine.HelpCommand.class,
                 UpdateCommand.class,
                 DrvCommand.class,
@@ -145,7 +146,7 @@ public class Main implements Callable<Integer> {
         System.out.println("  local cur=${COMP_WORDS[COMP_CWORD]}");
         System.out.println("  local prev=${COMP_WORDS[COMP_CWORD-1]}");
         System.out.println("  if [ $COMP_CWORD -eq 1 ]; then");
-        System.out.println("    COMPREPLY=($(compgen -W \"query count modify tables describe test begin commit rollback login logout use connections demo help update drv env\" -- \"$cur\"))");
+        System.out.println("    COMPREPLY=($(compgen -W \"query count modify tables describe test begin commit rollback login logout use connections demo exec help update drv env\" -- \"$cur\"))");
         System.out.println("  fi");
         System.out.println("}");
         System.out.println("complete -F _rd_completion rd roudan-jdbc-cli");

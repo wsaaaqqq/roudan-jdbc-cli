@@ -20,58 +20,45 @@ public class DemoCommand implements Callable<Integer> {
     public Integer call() throws Exception {
         long start = System.currentTimeMillis();
 
-        String url = "jdbc:h2:mem:demo;DB_CLOSE_DELAY=-1";
+        String home = System.getProperty("user.home");
+        new java.io.File(home, ".roudan-cli").mkdirs();
+        String dbPath = home + "/.roudan-cli/demo";
+        String url = "jdbc:h2:file:" + dbPath + ";AUTO_SERVER=TRUE";
         String user = "sa";
         String password = "";
         String driverClass = "org.h2.Driver";
+        String jar = null;
 
-        // Use H2 from Maven cache if available, otherwise from classpath
-        String h2Cache = System.getProperty("user.home")
-                + "/.m2/repository/com/h2database/h2/2.2.224/h2-2.2.224.jar";
-        String jar;
-        if (new java.io.File(h2Cache).exists()) {
-            jar = h2Cache;
+        // Use H2 from Maven cache, classpath, or download on demand
+        String localJar = home + "/.m2/repository/com/h2database/h2/2.2.224/h2-2.2.224.jar";
+        if (new java.io.File(localJar).exists()) {
+            jar = localJar;
         } else {
-            // Try classpath (H2 may be bundled)
             try {
                 Class.forName("org.h2.Driver");
-                jar = null; // DriverLoader will handle null
-            } catch (ClassNotFoundException e) {
-                // Download from Maven Central
+            } catch (ClassNotFoundException e1) {
                 org.xht.roudan.cli.driver.DriverRegistry.DriverInfo info =
                         org.xht.roudan.cli.driver.DriverRegistry.resolve(url);
                 if (info != null) {
-                    try {
-                        jar = org.xht.roudan.cli.driver.DriverDownloader.download(info);
-                    } catch (Exception ex) {
-                        ResultWriter.printResult(r -> {
-                            r.put("success", false);
-                            r.put("error", "Cannot download H2 driver: " + ex.getMessage());
-                            r.put("errorCode", "DOWNLOAD_ERROR");
-                            r.put("timeMs", System.currentTimeMillis() - start);
-                        }, true);
+                    try { jar = org.xht.roudan.cli.driver.DriverDownloader.download(info); }
+                    catch (Exception ex) {
+                        ResultWriter.printResult(r -> { r.put("success",false); r.put("error","Download H2 driver: " + ex.getMessage()); r.put("errorCode","DOWNLOAD_ERROR"); r.put("timeMs", System.currentTimeMillis() - start); }, true);
                         return 1;
                     }
-                } else {
-                    throw new RuntimeException("H2 driver not found. Install H2 to Maven repo or provide -j.");
-                }
+                } else throw new RuntimeException("H2 driver not found. Try providing -j.");
             }
         }
 
         Main.init(null, url, user, password, driverClass, jar, "default", false, 30000, null);
 
-        // Create sample schema and data
         String[] setup = {
             "CREATE TABLE IF NOT EXISTS t_demo (id INT PRIMARY KEY, name VARCHAR(100), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)",
             "INSERT INTO t_demo VALUES (1, 'Alice', NOW())",
             "INSERT INTO t_demo VALUES (2, 'Bob', NOW())",
             "INSERT INTO t_demo VALUES (3, 'Charlie', NOW())"
         };
-        for (String sql : setup) {
-            org.xht.rd.RD.modify().sql(sql).execute();
-        }
+        for (String sql : setup) { org.xht.rd.RD.modify().sql(sql).execute(); }
 
-        // Save as current connection
         ConnectionStore.save("default", url, user, password, driverClass, jar);
 
         long elapsed = System.currentTimeMillis() - start;
