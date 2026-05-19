@@ -21,6 +21,8 @@ curl -fsSL https://raw.githubusercontent.com/wsaaaqqq/roudan-jdbc-cli/main/INSTA
 
 ### Prerequisites
 
+- Java 8+ (JRE or JDK on PATH)
+
 ### Install
 
 ```bash

@@ -10,7 +10,7 @@ Choose one of the following methods:
 curl -fsSL https://raw.githubusercontent.com/wsaaaqqq/roudan-jdbc-cli/main/install.sh | bash
 ```
 
-This downloads a portable JRE 8 and the CLI jar. No pre-installed Java required.
+This downloads the CLI jar. Requires Java 8+ pre-installed.
 
 ### Option B: npm
 
@@ -18,7 +18,7 @@ This downloads a portable JRE 8 and the CLI jar. No pre-installed Java required.
 npm install -g roudan-jdbc-cli
 ```
 
-Also bundles a portable JRE automatically.
+Requires Java 8+ on PATH.
 
 ### Option C: Docker
 
@@ -30,13 +30,8 @@ alias roudan='docker run --rm -v "$(pwd):/workdir" -w /workdir wsaaaqqq/roudan-j
 ### Option D: Manual download
 
 ```bash
-# Create directories
-mkdir -p ~/.roudan-cli/lib ~/.roudan-cli/jre8
-
-# Download JRE 8 (Adoptium Temurin)
-# Windows: https://api.adoptium.net/v3/binary/latest/8/ga/windows/x64/jre/hotspot/normal/eclipse
-# Linux:   https://api.adoptium.net/v3/binary/latest/8/ga/linux/x64/jre/hotspot/normal/eclipse
-# macOS:   https://api.adoptium.net/v3/binary/latest/8/ga/mac/x64/jre/hotspot/normal/eclipse
+# Create directory
+mkdir -p ~/.roudan-cli/lib
 
 # Download CLI jar
 curl -fsSL -o ~/.roudan-cli/lib/roudan-jdbc-cli.jar \
@@ -46,13 +41,9 @@ curl -fsSL -o ~/.roudan-cli/lib/roudan-jdbc-cli.jar \
 cat > ~/.roudan-cli/roudan << 'EOF'
 #!/bin/sh
 DIR="$(dirname "$(readlink -f "$0")")"
-if [ -x "$DIR/jre8/bin/java" ]; then
-  exec "$DIR/jre8/bin/java" -jar "$DIR/lib/roudan-jdbc-cli.jar" "$@"
-else
-  exec java -jar "$DIR/lib/roudan-jdbc-cli.jar" "$@"
-fi
+exec java -jar "$DIR/lib/roudan-jdbc-cli.jar" "$@"
 EOF
-chmod +x ~/.roudan-cli/roudan-jdbc-cli
+chmod +x ~/.roudan-cli/roudan
 
 # Add to PATH
 export PATH="$HOME/.roudan-cli:$PATH"
