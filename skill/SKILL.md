@@ -1,6 +1,6 @@
 ---
 name: roudan-jdbc
-description: JDBC 数据库 CLI 工具。用于通过 JDBC 驱动执行 SQL 查询、修改、表结构查看、连接测试等数据库操作。当 AI 需要访问 JDBC 数据库、执行 SQL、查看表结构或进行 DDL 操作时使用。
+description: JDBC database CLI tool for AI agents. Execute SQL queries, DDL, inspect schemas, import/export data, test connections against any JDBC database. Use when the user needs to query a database, run SQL, explore tables, connect to MySQL/PostgreSQL/Oracle/SQL Server/DM/H2/Derby, or perform any database operation via JDBC.
 metadata:
   requires:
     bins: ["roudan"]
