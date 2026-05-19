@@ -7,10 +7,8 @@ set -e
 REPO="wsaaaqqq/roudan-jdbc-cli"
 VERSION="${VERSION:-latest}"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.roudan-cli}"
-BIN_NAME="roudan-jdbc-cli"
 CMD_NAME="roudan"
 
-# Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -20,28 +18,20 @@ log()  { printf "${GREEN}[roudan-jdbc-cli]${NC} %s\n" "$1"; }
 warn() { printf "${YELLOW}[warn]${NC} %s\n" "$1"; }
 err()  { printf "${RED}[error]${NC} %s\n" "$1"; exit 1; }
 
-log "Installing ${BIN_NAME} ${VERSION}..."
+log "Installing ${CMD_NAME} ${VERSION}..."
 
-# Detect OS and architecture
+# Check java
+if ! command -v java >/dev/null 2>&1; then
+    err "Java 8+ is required. Install it first: https://adoptium.net"
+fi
+
+# Detect OS
 OS=$(uname -s | tr '[:upper:]' '[:lower:]')
-ARCH=$(uname -m)
-
-case "$ARCH" in
-    x86_64|amd64) ARCH="x64" ;;
-    aarch64|arm64) ARCH="aarch64" ;;
-    *) err "Unsupported architecture: $ARCH" ;;
-esac
-
-# Map uname to Adoptium OS name
 case "$OS" in
-    linux)  ADOPT_OS="linux" ;;
-    darwin) ADOPT_OS="mac" ;;
-    mingw*|msys*|cygwin*) ADOPT_OS="windows" ;;
+    linux|darwin) ;;
+    mingw*|msys*|cygwin*) OS="windows" ;;
     *) err "Unsupported OS: $OS" ;;
 esac
-
-# JRE download URL (Adoptium Temurin 8 JRE)
-JRE_URL="https://api.adoptium.net/v3/binary/latest/8/ga/${ADOPT_OS}/${ARCH}/jre/hotspot/normal/eclipse"
 
 # Jar download URL (GitHub Releases)
 if [ "$VERSION" = "latest" ]; then
@@ -50,93 +40,44 @@ else
     JAR_URL="https://github.com/${REPO}/releases/download/${VERSION}/roudan-jdbc-cli.jar"
 fi
 
-mkdir -p "$INSTALL_DIR/lib" "$INSTALL_DIR/jre8"
+mkdir -p "$INSTALL_DIR/lib"
 
-JRE_TMP_DIR="/tmp/roudan-jre-$$"
-mkdir -p "$JRE_TMP_DIR/extract"
-JRE_ARCHIVE="$JRE_TMP_DIR/jre-archive"
-JRE_OK="$JRE_TMP_DIR/.jre-ok"
-JAR_OK="$JRE_TMP_DIR/.jar-ok"
-
-rm -f "$JRE_OK" "$JAR_OK"
-
-# Download JRE in background
-log "Downloading JRE 8 (Adoptium Temurin)..."
-(
-    if curl -fL --progress-bar -o "$JRE_ARCHIVE" "$JRE_URL"; then
-        touch "$JRE_OK"
-    fi
-) &
-
-# Download jar in background
-log "Downloading ${BIN_NAME} ${VERSION}..."
-(
-    if curl -fL --progress-bar -o "$INSTALL_DIR/lib/${BIN_NAME}.jar" "$JAR_URL"; then
-        touch "$JAR_OK"
-    fi
-) &
-
-JRE_PID=$!
-JAR_PID=$!
-
-# Wait for both downloads
-wait $JRE_PID $JAR_PID
-
-# Check download results
-if [ ! -f "$JRE_OK" ]; then
-    err "Failed to download JRE."
-fi
-if [ ! -f "$JAR_OK" ]; then
+log "Downloading ${CMD_NAME} ${VERSION}..."
+if ! curl -fL --progress-bar -o "$INSTALL_DIR/lib/roudan-jdbc-cli.jar" "$JAR_URL"; then
+    rm -f "$INSTALL_DIR/lib/roudan-jdbc-cli.jar"
     err "Failed to download jar."
 fi
 
-# Extract JRE
-if [ "$ADOPT_OS" = "windows" ]; then
-    unzip -o "$JRE_ARCHIVE" -d "$JRE_TMP_DIR/extract" >/dev/null 2>&1 || err "Failed to extract JRE."
-else
-    tar xzf "$JRE_ARCHIVE" -C "$JRE_TMP_DIR/extract" 2>/dev/null || err "Failed to extract JRE."
-fi
-
-# Find java binary (handle nested top-level dir in archive)
-JRE_EXTRACTED=$(find "$JRE_TMP_DIR/extract" -type f -name "java" -path "*/bin/java" 2>/dev/null | head -1)
-if [ -n "$JRE_EXTRACTED" ]; then
-    JRE_SRC=$(dirname "$(dirname "$JRE_EXTRACTED")")
-    cp -R "$JRE_SRC"/* "$INSTALL_DIR/jre8/" 2>/dev/null || true
-else
-    err "JRE extraction failed: java binary not found."
-fi
-
-rm -rf "$JRE_TMP_DIR"
-
 # Create wrapper script
 WRAPPER="${INSTALL_DIR}/${CMD_NAME}"
-if [ "$ADOPT_OS" = "windows" ]; then
+if [ "$OS" = "windows" ]; then
     WRAPPER="${INSTALL_DIR}/${CMD_NAME}.bat"
-    cat > "$WRAPPER" << 'WRAPPER_EOF'
+    cat > "$WRAPPER" << 'EOF'
 @echo off
 set DIR=%~dp0
-set JAVA=%DIR%jre8\bin\java.exe
-if exist "%JAVA%" (
-    "%JAVA%" -jar "%DIR%lib\roudan-jdbc-cli.jar" %*
-) else (
+if exist "%DIR%lib\roudan-jdbc-cli.jar" (
     java -jar "%DIR%lib\roudan-jdbc-cli.jar" %*
+) else (
+    echo roudan: not installed. Run: npm install -g roudan-jdbc-cli
+    exit /b 1
 )
-WRAPPER_EOF
+EOF
 else
-    cat > "$WRAPPER" << 'WRAPPER_EOF'
+    cat > "$WRAPPER" << 'EOF'
 #!/bin/sh
 DIR="$(dirname "$(readlink -f "$0")")"
-if [ -x "$DIR/jre8/bin/java" ]; then
-    exec "$DIR/jre8/bin/java" -jar "$DIR/lib/roudan-jdbc-cli.jar" "$@"
-else
+if [ -f "$DIR/lib/roudan-jdbc-cli.jar" ]; then
     exec java -jar "$DIR/lib/roudan-jdbc-cli.jar" "$@"
+else
+    echo "roudan: not installed. Run: npm install -g roudan-jdbc-cli"
+    exit 1
 fi
-WRAPPER_EOF
+EOF
     chmod +x "$WRAPPER"
 fi
 
 # Add to PATH
-if [ "$ADOPT_OS" != "windows" ]; then
+if [ "$OS" != "windows" ]; then
     SHELL_RC=""
     case "$SHELL" in
         */zsh)  SHELL_RC="$HOME/.zshrc" ;;
@@ -163,7 +104,7 @@ fi
 echo ""
 log "Done!"
 echo ""
-if [ "$ADOPT_OS" = "windows" ]; then
+if [ "$OS" = "windows" ]; then
     echo "  Add ${INSTALL_DIR} to PATH manually."
     echo "  Run: roudan --help"
 else

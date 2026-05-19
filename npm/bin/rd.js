@@ -6,14 +6,9 @@ const os = require('os');
 
 const INSTALL_DIR = path.join(os.homedir(), '.roudan-cli');
 const jar = path.join(INSTALL_DIR, 'lib', 'roudan-jdbc-cli.jar');
-
-const isWin = process.platform === 'win32';
-const bundledJava = path.join(INSTALL_DIR, 'jre8', 'bin', isWin ? 'java.exe' : 'java');
-const javaBin = existsSync(bundledJava) ? bundledJava : 'java';
-
 const args = ['-jar', jar].concat(process.argv.slice(2));
 
-const result = spawnSync(javaBin, args, { stdio: 'inherit' });
+const result = spawnSync('java', args, { stdio: 'inherit' });
 
 if (result.status !== 0) {
   if (!existsSync(jar)) {

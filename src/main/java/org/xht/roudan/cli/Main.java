@@ -28,7 +28,7 @@ import java.util.concurrent.Callable;
         name = "roudan",
         description = "JDBC CLI tool for AI agents",
         mixinStandardHelpOptions = true,
-        version = "0.5.0",
+        version = "0.5.1",
         subcommands = {
                 QueryCommand.class,
                 CountCommand.class,
