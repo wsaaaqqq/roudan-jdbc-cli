@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const { execSync } = require('child_process');
+const { spawnSync } = require('child_process');
 const { existsSync } = require('fs');
 const path = require('path');
 const os = require('os');
@@ -9,15 +9,15 @@ const jar = path.join(INSTALL_DIR, 'lib', 'roudan-jdbc-cli.jar');
 
 const isWin = process.platform === 'win32';
 const bundledJava = path.join(INSTALL_DIR, 'jre8', 'bin', isWin ? 'java.exe' : 'java');
-const cmd = existsSync(bundledJava)
-  ? `"${bundledJava}" -jar "${jar}" ${process.argv.slice(2).join(' ')}`
-  : `java -jar "${jar}" ${process.argv.slice(2).join(' ')}`;
+const javaBin = existsSync(bundledJava) ? bundledJava : 'java';
 
-try {
-  execSync(cmd, { stdio: 'inherit', shell: true });
-} catch (e) {
+const args = ['-jar', jar].concat(process.argv.slice(2));
+
+const result = spawnSync(javaBin, args, { stdio: 'inherit' });
+
+if (result.status !== 0) {
   if (!existsSync(jar)) {
-    console.error('rd: not installed. Run: npm install -g roudan-jdbc-cli');
+    console.error('roudan: not installed. Run: npm install -g roudan-jdbc-cli');
   }
-  process.exit(1);
+  process.exit(result.status || 1);
 }

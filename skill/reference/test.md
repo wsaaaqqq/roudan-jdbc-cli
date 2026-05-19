@@ -3,7 +3,7 @@
 ## 语法
 
 ```bash
-rd test
+roudan test
 ```
 
 ## 选项
@@ -36,5 +36,5 @@ rd test
 ## 示例
 
 ```bash
-rd -u jdbc:mysql://localhost:3306/test -n root -p 123456 -d com.mysql.cj.jdbc.Driver -j ./mysql-connector.jar test
+roudan -u jdbc:mysql://localhost:3306/test -n root -p 123456 -d com.mysql.cj.jdbc.Driver -j ./mysql-connector.jar test
 ```

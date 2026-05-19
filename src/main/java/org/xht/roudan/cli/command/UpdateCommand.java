@@ -36,7 +36,7 @@ public class UpdateCommand implements Callable<Integer> {
         Path jarPath = Paths.get(home, ".roudan-cli", "lib", "roudan-jdbc-cli.jar");
         Path backupPath = Paths.get(home, ".roudan-cli", "lib", "roudan-jdbc-cli.jar.bak");
 
-        System.err.print("[rd] Downloading " + ver + "... ");
+        System.err.print("[roudan] Downloading " + ver + "... ");
         System.err.flush();
 
         try (InputStream in = new URL(url).openStream()) {

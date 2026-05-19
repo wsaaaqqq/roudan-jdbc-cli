@@ -3,7 +3,7 @@
 ## 语法
 
 ```bash
-rd describe -t <table-name>
+roudan describe -t <table-name>
 ```
 
 ## 选项
@@ -36,5 +36,5 @@ rd describe -t <table-name>
 ## 示例
 
 ```bash
-rd describe -t T_USER
+roudan describe -t T_USER
 ```

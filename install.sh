@@ -8,7 +8,7 @@ REPO="wsaaaqqq/roudan-jdbc-cli"
 VERSION="${VERSION:-latest}"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.roudan-cli}"
 BIN_NAME="roudan-jdbc-cli"
-CMD_NAME="rd"
+CMD_NAME="roudan"
 
 # Colors
 RED='\033[0;31m'
@@ -135,14 +135,6 @@ WRAPPER_EOF
     chmod +x "$WRAPPER"
 fi
 
-# Create compatibility alias (roudan-jdbc-cli → rd)
-if [ "$ADOPT_OS" = "windows" ]; then
-    cp "${INSTALL_DIR}/${CMD_NAME}.bat" "${INSTALL_DIR}/${BIN_NAME}.bat" 2>/dev/null || true
-    cp "${INSTALL_DIR}/${CMD_NAME}.bat" "${INSTALL_DIR}/rcli.bat" 2>/dev/null || true
-else
-    ln -sf "${INSTALL_DIR}/${CMD_NAME}" "${INSTALL_DIR}/${BIN_NAME}" 2>/dev/null || true
-fi
-
 # Add to PATH
 if [ "$ADOPT_OS" != "windows" ]; then
     SHELL_RC=""
@@ -173,10 +165,10 @@ log "Done!"
 echo ""
 if [ "$ADOPT_OS" = "windows" ]; then
     echo "  Add ${INSTALL_DIR} to PATH manually."
-    echo "  Run: rcli --help  (Use 'rcli' on Windows to avoid cmd/powershell 'rd' conflict)"
+    echo "  Run: roudan --help"
 else
     echo "  Restart your shell or run:"
     echo "    export PATH=\"${INSTALL_DIR}:\$PATH\""
 fi
 echo ""
-echo "  ${CMD_NAME} --help"
+echo "  roudan --help"

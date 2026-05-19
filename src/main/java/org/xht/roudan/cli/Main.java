@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.xht.roudan.cli.command.*;
 import org.xht.roudan.cli.config.CliConfig;
 import org.xht.roudan.cli.config.ConfigLoader;
+import org.xht.roudan.cli.config.ConnectionStore;
 import org.xht.roudan.cli.datasource.DataSourceFactory;
 import org.xht.roudan.cli.driver.DriverDownloader;
 import org.xht.roudan.cli.driver.DriverLoader;
@@ -24,11 +25,10 @@ import java.util.concurrent.Callable;
 @Getter
 @Setter
 @CommandLine.Command(
-        name = "rd",
-        aliases = {"roudan-jdbc-cli"},
+        name = "roudan",
         description = "JDBC CLI tool for AI agents",
         mixinStandardHelpOptions = true,
-        version = "0.4.0",
+        version = "0.5.0",
         subcommands = {
                 QueryCommand.class,
                 CountCommand.class,
@@ -145,15 +145,15 @@ public class Main implements Callable<Integer> {
     }
 
     private void printBashCompletion() {
-        System.out.println("# rd bash completion");
-        System.out.println("_rd_completion() {");
+        System.out.println("# roudan bash completion");
+        System.out.println("_roudan_completion() {");
         System.out.println("  local cur=${COMP_WORDS[COMP_CWORD]}");
         System.out.println("  local prev=${COMP_WORDS[COMP_CWORD-1]}");
         System.out.println("  if [ $COMP_CWORD -eq 1 ]; then");
         System.out.println("    COMPREPLY=($(compgen -W \"query count modify tables describe test begin commit rollback login logout use connections demo exec import export gen tail help update drv env\" -- \"$cur\"))");
         System.out.println("  fi");
         System.out.println("}");
-        System.out.println("complete -F _rd_completion rd roudan-jdbc-cli");
+        System.out.println("complete -F _roudan_completion roudan");
     }
 
     public static class ErrorHandler implements CommandLine.IExecutionExceptionHandler {
@@ -261,13 +261,29 @@ public class Main implements Callable<Integer> {
         if (showSql) settings.setShowSql(true);
         RDConfig.setShowSql(settings.isShowSql());
 
+        // Check ~/.roudan/drivers/[name]/ for local driver JARs (unless -j explicitly given)
+        if (driverJar == null) {
+            String connName = savedName != null ? savedName : ConnectionStore.getCurrentName();
+            if (connName != null) {
+                java.io.File driverDir = new java.io.File(
+                        System.getProperty("user.home") + "/.roudan/drivers/" + connName);
+                if (driverDir.isDirectory()) {
+                    java.io.File[] jars = driverDir.listFiles(f -> f.getName().endsWith(".jar"));
+                    if (jars != null && jars.length > 0) {
+                        config.setDriverJar(jars[0].getAbsolutePath());
+                        System.err.println("[roudan] Using local driver: " + jars[0].getName());
+                    }
+                }
+            }
+        }
+
         // Auto-resolve driver class and JAR from JDBC URL
         if (config.getDriverClass() == null || config.getDriverJar() == null) {
             DriverRegistry.DriverInfo drvInfo = DriverRegistry.resolve(config.getUrl());
             if (drvInfo != null) {
                 if (config.getDriverClass() == null) {
                     config.setDriverClass(drvInfo.getDriverClass());
-                    System.err.println("[rd] Auto-detected driver: " + drvInfo.getDriverClass());
+                    System.err.println("[roudan] Auto-detected driver: " + drvInfo.getDriverClass());
                 }
                 if (config.getDriverJar() == null) {
                     if (DriverRegistry.isFullyCached(drvInfo)) {

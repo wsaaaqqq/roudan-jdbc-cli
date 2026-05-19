@@ -4,12 +4,12 @@ description: JDBC 数据库 CLI 工具。用于通过 JDBC 驱动执行 SQL 查�
 metadata:
   requires:
     bins: ["rd"]
-  cliHelp: "rd --help"
+  cliHelp: "roudan --help"
 ---
 
 # roudan-jdbc-cli
 
-> rd 是一个命令行 JDBC 数据库工具，所有数据库操作通过执行 `rd` 命令完成。
+> roudan 是一个命令行 JDBC 数据库工具，所有数据库操作通过执行 `roudan` 命令完成。
 
 ## 安装
 
@@ -21,7 +21,7 @@ AI agent 自动安装步骤：
 2. 从 [GitHub Releases](https://github.com/wsaaaqqq/roudan-jdbc-cli/releases) 下载最新 zip
 3. 解压到 `~/.roudan-cli/`
 4. 将 `~/.roudan-cli/` 加入 PATH
-5. 验证：`rd --help`
+5. 验证：`roudan --help`
 
 或者从源码构建：
 
@@ -35,7 +35,7 @@ cd ../roudan-jdbc-cli && mvn package
 ## 调用方式
 
 ```bash
-rd [连接选项] <子命令> [子命令选项]
+roudan [连接选项] <子命令> [子命令选项]
 ```
 
 ### 连接选项
@@ -44,20 +44,20 @@ rd [连接选项] <子命令> [子命令选项]
 |------|------|
 | `-u, --url <jdbc-url>` | JDBC URL |
 | `-n, --user <user>` | 用户名 |
-| `-p, --password <pw>` | 密码 |
+| `-p, --passworoudan <pw>` | 密码 |
 | `-d, --driver <class>` | 驱动类名 |
 | `-j, --driver-jar <path>` | 驱动 JAR 路径 |
 | `-c, --config <file>` | YAML 配置文件 |
 
-连接参数也可通过环境变量设置：`ROUDAN_JDBC_URL`, `ROUDAN_JDBC_USER`, `ROUDAN_JDBC_PASSWORD`, `ROUDAN_JDBC_DRIVER`, `ROUDAN_JDBC_DRIVER_JAR`
+连接参数也可通过环境变量设置：`ROUDAN_JDBC_URL`, `ROUDAN_JDBC_USER`, `ROUDAN_JDBC_PASSWOroudan`, `ROUDAN_JDBC_DRIVER`, `ROUDAN_JDBC_DRIVER_JAR`
 
 ### 子命令
 
 #### `query` — 查询
 
 ```bash
-rd query -s "SELECT * FROM T_USER WHERE age > ?" -a '[18]' --limit 5
-rd query -s "SELECT * FROM T_USER WHERE id = :id" --named -a '{"id":"U01"}'
+roudan query -s "SELECT * FROM T_USER WHERE age > ?" -a '[18]' --limit 5
+roudan query -s "SELECT * FROM T_USER WHERE id = :id" --named -a '{"id":"U01"}'
 ```
 
 参数：`-s/--sql <sql>` 或 `-f/--sql-file <path>`，`--named` 使用命名参数，`-a/--args` 传参（JSON 数组或对象），`--limit <n>` 限制行数，`--page/--size` 分页。
@@ -72,7 +72,7 @@ rows 中的值保留 JDBC 原生类型：number、string、null。
 #### `count` — 计数
 
 ```bash
-rd count -s "SELECT * FROM T_USER WHERE status = :st" --named -a '{"st":"ACTIVE"}'
+roudan count -s "SELECT * FROM T_USER WHERE status = :st" --named -a '{"st":"ACTIVE"}'
 ```
 
 输出：`{"success":true,"count":1503,"timeMs":8}`
@@ -80,8 +80,8 @@ rd count -s "SELECT * FROM T_USER WHERE status = :st" --named -a '{"st":"ACTIVE"
 #### `modify` — 增删改 / DDL
 
 ```bash
-rd modify -s "INSERT INTO T_USER (id, name) VALUES (:id, :name)" --named -a '{"id":"U01","name":"张三"}'
-rd modify -s "CREATE TABLE T_LOG (id VARCHAR(32), msg TEXT)"
+roudan modify -s "INSERT INTO T_USER (id, name) VALUES (:id, :name)" --named -a '{"id":"U01","name":"张三"}'
+roudan modify -s "CREATE TABLE T_LOG (id VARCHAR(32), msg TEXT)"
 ```
 
 输出：`{"success":true,"affectedRows":1,"timeMs":12}`
@@ -89,8 +89,8 @@ rd modify -s "CREATE TABLE T_LOG (id VARCHAR(32), msg TEXT)"
 #### `tables` — 表列表
 
 ```bash
-rd tables
-rd tables --pattern "T_%"
+roudan tables
+roudan tables --pattern "T_%"
 ```
 
 输出：`{"success":true,"tables":[{"name":"T_USER","type":"TABLE"}],"timeMs":5}`
@@ -98,7 +98,7 @@ rd tables --pattern "T_%"
 #### `describe` — 表结构
 
 ```bash
-rd describe -t T_USER
+roudan describe -t T_USER
 ```
 
 输出：`{"success":true,"table":"T_USER","columns":[{"name":"ID","type":"VARCHAR","size":32,"nullable":false,"pk":true}],"timeMs":3}`
@@ -106,9 +106,9 @@ rd describe -t T_USER
 #### `exec` — 执行 SQL 文件（事务）
 
 ```bash
-rd exec -f script.sql
-rd exec -s "INSERT INTO t VALUES(1); SELECT * FROM t"
-rd exec -f script.sql --dry-run
+roudan exec -f script.sql
+roudan exec -s "INSERT INTO t VALUES(1); SELECT * FROM t"
+roudan exec -f script.sql --dry-run
 ```
 
 在一个连接中自动执行多条 SQL 语句（`autoCommit=false`），全部成功时 COMMIT，任意一条失败时 ROLLBACK。
@@ -128,7 +128,7 @@ rd exec -f script.sql --dry-run
 #### `test` — 连接测试
 
 ```bash
-rd test
+roudan test
 ```
 
 输出：`{"success":true,"message":"connection ok","dbProduct":"MySQL 8.0.33","timeMs":120}`

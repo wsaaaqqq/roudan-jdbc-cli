@@ -1,4 +1,4 @@
-# rd — AI Agent Installation Guide
+# roudan 鈥?AI Agent Installation Guide
 
 ## Install roudan-jdbc-cli
 
@@ -24,7 +24,7 @@ Also bundles a portable JRE automatically.
 
 ```bash
 docker pull wsaaaqqq/roudan-jdbc-cli:latest
-alias rd='docker run --rm -v "$(pwd):/workdir" -w /workdir wsaaaqqq/roudan-jdbc-cli'
+alias roudan='docker run --rm -v "$(pwd):/workdir" -w /workdir wsaaaqqq/roudan-jdbc-cli'
 ```
 
 ### Option D: Manual download
@@ -43,7 +43,7 @@ curl -fsSL -o ~/.roudan-cli/lib/roudan-jdbc-cli.jar \
   https://github.com/wsaaaqqq/roudan-jdbc-cli/releases/latest/download/roudan-jdbc-cli.jar
 
 # Create wrapper (Unix)
-cat > ~/.roudan-cli/rd << 'EOF'
+cat > ~/.roudan-cli/roudan << 'EOF'
 #!/bin/sh
 DIR="$(dirname "$(readlink -f "$0")")"
 if [ -x "$DIR/jre8/bin/java" ]; then
@@ -84,7 +84,7 @@ Restart OpenCode for the skill to be loaded.
 ## Verify
 
 ```bash
-rd --help
+roudan --help
 ```
 
 Expected output shows available commands: `query`, `count`, `modify`, `tables`, `describe`, `test`, `begin`, `commit`, `rollback`, `login`, `logout`, `use`, `connections`.
@@ -97,10 +97,10 @@ Test with H2 in-memory database (no external DB needed):
 # Download H2 driver if not already in Maven cache
 H2JAR="$HOME/.m2/repository/com/h2database/h2/2.2.220/h2-2.2.220.jar"
 
-rd -u jdbc:h2:mem:test -n sa -d org.h2.Driver -j "$H2JAR" test
-rd -u jdbc:h2:mem:test -n sa -d org.h2.Driver -j "$H2JAR" modify -s "CREATE TABLE T(ID INT, NAME VARCHAR)"
-rd -u jdbc:h2:mem:test -n sa -d org.h2.Driver -j "$H2JAR" modify -s "INSERT INTO T VALUES(:id,:name)" --named -a '{"id":1,"name":"hello"}'
-rd -u jdbc:h2:mem:test -n sa -d org.h2.Driver -j "$H2JAR" query -s "SELECT * FROM T"
+roudan -u jdbc:h2:mem:test -n sa -d org.h2.Driver -j "$H2JAR" test
+roudan -u jdbc:h2:mem:test -n sa -d org.h2.Driver -j "$H2JAR" modify -s "CREATE TABLE T(ID INT, NAME VARCHAR)"
+roudan -u jdbc:h2:mem:test -n sa -d org.h2.Driver -j "$H2JAR" modify -s "INSERT INTO T VALUES(:id,:name)" --named -a '{"id":1,"name":"hello"}'
+roudan -u jdbc:h2:mem:test -n sa -d org.h2.Driver -j "$H2JAR" query -s "SELECT * FROM T"
 ```
 
 ## Connection Persistence (login)
@@ -109,15 +109,15 @@ Save connection params once, use them everywhere:
 
 ```bash
 # Login with YAML config (supports Spring DataSource format)
-rd login -f application-dm.yml -j DmJdbcDriver.jar
+roudan login -f application-dm.yml -j DmJdbcDriver.jar
 
 # Login with CLI args
-rd -u jdbc:mysql://localhost:3306/test -n root -p pass -d com.mysql.cj.jdbc.Driver -j ./mysql-connector.jar login
+roudan -u jdbc:mysql://localhost:3306/test -n root -p pass -d com.mysql.cj.jdbc.Driver -j ./mysql-connector.jar login
 
 # After login, all commands reuse the saved connection:
-rd test
-rd tables
-rd query -s "SELECT * FROM T_USER" --limit 5
+roudan test
+roudan tables
+roudan query -s "SELECT * FROM T_USER" --limit 5
 ```
 
 ## Connection Configuration

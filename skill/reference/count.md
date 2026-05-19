@@ -3,7 +3,7 @@
 ## 语法
 
 ```bash
-rd count -s <sql> [选项]
+roudan count -s <sql> [选项]
 ```
 
 ## 选项
@@ -31,6 +31,6 @@ rd count -s <sql> [选项]
 ## 示例
 
 ```bash
-rd count -s "SELECT * FROM T_USER WHERE age > ?" -a '[18]'
-rd count -s "SELECT * FROM T_USER WHERE status = :st" --named -a '{"st":"ACTIVE"}'
+roudan count -s "SELECT * FROM T_USER WHERE age > ?" -a '[18]'
+roudan count -s "SELECT * FROM T_USER WHERE status = :st" --named -a '{"st":"ACTIVE"}'
 ```

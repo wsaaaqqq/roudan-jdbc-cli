@@ -3,7 +3,7 @@
 ## 语法
 
 ```bash
-rd tables [选项]
+roudan tables [选项]
 ```
 
 ## 选项
@@ -30,8 +30,8 @@ rd tables [选项]
 
 ```bash
 # 列出所有表
-rd tables
+roudan tables
 
 # 按模式过滤
-rd tables --pattern "T_%"
+roudan tables --pattern "T_%"
 ```

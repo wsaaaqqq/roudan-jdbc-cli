@@ -1,6 +1,6 @@
 # roudan-jdbc-cli
 
-[English](README.md) | [简体中文](readme/README.zh.md) | [繁體中文](readme/README.zht.md) | [한국어](readme/README.ko.md) | [Deutsch](readme/README.de.md) | [Español](readme/README.es.md) | [Français](readme/README.fr.md) | [Italiano](readme/README.it.md) | [Dansk](readme/README.da.md) | [日本語](readme/README.ja.md) | [Polski](readme/README.pl.md) | [Русский](readme/README.ru.md) | [Bosanski](readme/README.bs.md) | [العربية](readme/README.ar.md) | [Norsk](readme/README.no.md) | [Português (Brasil)](readme/README.br.md) | [ไทย](readme/README.th.md) | [Türkçe](readme/README.tr.md) | [Українська](readme/README.uk.md) | [বাংলা](readme/README.bn.md) | [Ελληνικά](readme/README.gr.md) | [Tiếng Việt](readme/README.vi.md)
+[English](README.md) | [绠€浣撲腑鏂嘳(readme/README.zh.md) | [绻侀珨涓枃](readme/README.zht.md) | [頃滉淡鞏碷(readme/README.ko.md) | [Deutsch](readme/README.de.md) | [Espa帽ol](readme/README.es.md) | [Fran莽ais](readme/README.fr.md) | [Italiano](readme/README.it.md) | [Dansk](readme/README.da.md) | [鏃ユ湰瑾瀅(readme/README.ja.md) | [Polski](readme/README.pl.md) | [袪褍褋褋泻懈泄](readme/README.ru.md) | [Bosanski](readme/README.bs.md) | [丕賱毓乇亘賷丞](readme/README.ar.md) | [Norsk](readme/README.no.md) | [Portugu锚s (Brasil)](readme/README.br.md) | [喙勦笚喔(readme/README.th.md) | [T眉rk莽e](readme/README.tr.md) | [校泻褉邪褩薪褋褜泻邪](readme/README.uk.md) | [唳唳傕Σ唳綸(readme/README.bn.md) | [螘位位畏谓喂魏维](readme/README.gr.md) | [Ti岷縩g Vi峄噒](readme/README.vi.md)
 
 JDBC CLI tool for AI agents. Executes SQL against any JDBC database, outputs JSON to stdout.
 
@@ -40,57 +40,57 @@ curl -fsSL https://raw.githubusercontent.com/wsaaaqqq/roudan-jdbc-cli/main/insta
 # ====== Connection Persistence (login once, use anywhere) ======
 
 # Login with CLI args
-rd -u jdbc:mysql://localhost:3306/test -n root -p pass -d com.mysql.cj.jdbc.Driver -j ./mysql-connector.jar login
+roudan -u jdbc:mysql://localhost:3306/test -n root -p pass -d com.mysql.cj.jdbc.Driver -j ./mysql-connector.jar login
 
 # Login with YAML (auto-detect datasource from any nesting level)
-rd login -f application-dm.yml -j DmJdbcDriver.jar
+roudan login -f application-dm.yml -j DmJdbcDriver.jar
 
 # Login with multi-datasource YAML, specify which datasource
-rd login -f multi.yml mydb
+roudan login -f multi.yml mydb
 
 # After login, all commands omit connection params:
-rd test
-rd tables
-rd query -s "SELECT * FROM T_USER" --limit 5
+roudan test
+roudan tables
+roudan query -s "SELECT * FROM T_USER" --limit 5
 
 # Use a different saved connection
-rd use mydb
+roudan use mydb
 
 # One-off use of a saved connection
-rd --name mydb tables
+roudan --name mydb tables
 
 # List saved connections
-rd connections
+roudan connections
 
 # Logout (clear current connection)
-rd logout
+roudan logout
 
 # ====== Direct Connection (one-shot, no login) ======
 
 # Test connection
-rd -u jdbc:mysql://localhost:3306/test -n root -p pass -d com.mysql.cj.jdbc.Driver -j ./mysql-connector.jar test
+roudan -u jdbc:mysql://localhost:3306/test -n root -p pass -d com.mysql.cj.jdbc.Driver -j ./mysql-connector.jar test
 
 # Query
-rd query -s "SELECT * FROM T_USER" --limit 5
+roudan query -s "SELECT * FROM T_USER" --limit 5
 
 # Named params
-rd query -s "SELECT * FROM T_USER WHERE id = :id" --named -a '{"id":"U01"}'
+roudan query -s "SELECT * FROM T_USER WHERE id = :id" --named -a '{"id":"U01"}'
 
 # Insert
-rd modify -s "INSERT INTO T_USER (id, name) VALUES (:id, :name)" --named -a '{"id":"U01","name":"Alice"}'
+roudan modify -s "INSERT INTO T_USER (id, name) VALUES (:id, :name)" --named -a '{"id":"U01","name":"Alice"}'
 
 # List tables
-rd tables
+roudan tables
 
 # Describe table
-rd describe -t T_USER
+roudan describe -t T_USER
 
 # Execute SQL file as single transaction
-rd exec -f script.sql
-rd exec -s "INSERT INTO t VALUES(1); INSERT INTO t VALUES(2); SELECT * FROM t"
+roudan exec -f script.sql
+roudan exec -s "INSERT INTO t VALUES(1); INSERT INTO t VALUES(2); SELECT * FROM t"
 
 # Execute SQL file with dry-run (parse only)
-rd exec -f script.sql --dry-run
+roudan exec -f script.sql --dry-run
 ```
 
 ## Commands
@@ -158,11 +158,11 @@ mvn package
 
 ```
 roudan-jdbc-cli
-  ├── Picocli CLI entry → parse args
-  ├── ConfigLoader    → Config merge (YAML + CLI)
-  ├── DriverLoader    → URLClassLoader dynamically loads JDBC drivers
-  ├── DataSourceFactory → Register with roudan-core
-  └── CommandExecutor → RD.query() / RD.modify() / JDBC metadata
+  鈹溾攢鈹€ Picocli CLI entry 鈫?parse args
+  鈹溾攢鈹€ ConfigLoader    鈫?Config merge (YAML + CLI)
+  鈹溾攢鈹€ DriverLoader    鈫?URLClassLoader dynamically loads JDBC drivers
+  鈹溾攢鈹€ DataSourceFactory 鈫?Register with roudan-core
+  鈹斺攢鈹€ CommandExecutor 鈫?roudan.query() / roudan.modify() / JDBC metadata
 ```
 
 Built on [roudan-core](https://github.com/wsaaaqqq/xdb).

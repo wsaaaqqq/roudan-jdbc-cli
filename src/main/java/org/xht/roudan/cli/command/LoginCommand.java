@@ -160,6 +160,19 @@ public class LoginCommand implements Callable<Integer> {
         if (main.getDriverClass() != null) driverClass = main.getDriverClass();
         if (main.getDriverJar() != null) driverJar = main.getDriverJar();
 
+        // Check ~/.roudan/drivers/[name]/ for local driver JARs
+        if (driverJar == null && name != null) {
+            java.io.File driverDir = new java.io.File(
+                    System.getProperty("user.home") + "/.roudan/drivers/" + name);
+            if (driverDir.isDirectory()) {
+                java.io.File[] jars = driverDir.listFiles(f -> f.getName().endsWith(".jar"));
+                if (jars != null && jars.length > 0) {
+                    driverJar = jars[0].getAbsolutePath();
+                    System.err.println("[roudan] Using local driver: " + jars[0].getName());
+                }
+            }
+        }
+
         // Auto-resolve driver from URL (if missing)
         if (url != null && (driverClass == null || driverJar == null)) {
             org.xht.roudan.cli.driver.DriverRegistry.DriverInfo drvInfo = org.xht.roudan.cli.driver.DriverRegistry.resolve(url);
@@ -185,6 +198,22 @@ public class LoginCommand implements Callable<Integer> {
                 r.put("errorCode", "PARAM_ERROR");
             }, true);
             return 1;
+        }
+
+        // Copy driver JAR to ~/.roudan/drivers/<name>/ so subsequent use doesn't need -j
+        java.io.File srcJar = new java.io.File(driverJar);
+        if (srcJar.isFile()) {
+            String driverDir = System.getProperty("user.home") + "/.roudan/drivers/" + name;
+            java.io.File destDir = new java.io.File(driverDir);
+            destDir.mkdirs();
+            java.io.File destJar = new java.io.File(destDir, srcJar.getName());
+            try {
+                java.nio.file.Files.copy(srcJar.toPath(), destJar.toPath(),
+                        java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                driverJar = destJar.getAbsolutePath();
+            } catch (Exception e) {
+                System.err.println("[roudan] Warning: failed to copy driver to " + destJar + ": " + e.getMessage());
+            }
         }
 
         ConnectionStore.save(name, url, user, password, driverClass, driverJar);
