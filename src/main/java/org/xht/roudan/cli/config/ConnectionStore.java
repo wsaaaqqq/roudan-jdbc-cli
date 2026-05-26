@@ -47,6 +47,20 @@ public class ConnectionStore {
         writeRoot(root);
     }
 
+    public static synchronized void rename(String oldName, String newName) {
+        JSONObject root = loadRoot();
+        JSONObject conns = root.getJSONObject("connections");
+        if (conns == null || !conns.containsKey(oldName)) {
+            return;
+        }
+        conns.set(newName, conns.get(oldName));
+        conns.remove(oldName);
+        if (oldName.equals(root.getStr("current"))) {
+            root.set("current", newName);
+        }
+        writeRoot(root);
+    }
+
     public static synchronized void setCurrent(String name) {
         JSONObject root = loadRoot();
         root.set("current", name);

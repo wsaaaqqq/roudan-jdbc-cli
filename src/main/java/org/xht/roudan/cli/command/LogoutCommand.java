@@ -9,30 +9,43 @@ import java.util.concurrent.Callable;
 
 @CommandLine.Command(
         name = "logout",
-        description = "Clear the current saved connection"
+        description = "Remove a saved connection"
 )
 public class LogoutCommand implements Callable<Integer> {
 
     @CommandLine.ParentCommand
     private Main main;
 
+    @CommandLine.Option(names = "--name", description = "Connection name to remove (default: current)")
+    private String name;
+
     @Override
     public Integer call() {
-        String current = ConnectionStore.getCurrentName();
-        if (current == null) {
+        String target = name != null ? name : ConnectionStore.getCurrentName();
+        if (target == null) {
             ResultWriter.printResult(r -> {
                 r.put("success", false);
-                r.put("error", "no active connection to logout");
+                r.put("error", "no connection specified and no active connection");
                 r.put("errorCode", "NOT_FOUND");
             }, true);
             return 1;
         }
 
-        ConnectionStore.remove(current);
+        if (ConnectionStore.getByName(target) == null) {
+            ResultWriter.printResult(r -> {
+                r.put("success", false);
+                r.put("error", "connection '" + target + "' not found");
+                r.put("errorCode", "NOT_FOUND");
+            }, true);
+            return 1;
+        }
+
+        ConnectionStore.remove(target);
 
         ResultWriter.printResult(r -> {
             r.put("success", true);
-            r.put("message", "logged out, removed '" + current + "'");
+            r.put("message", "removed connection '" + target + "'");
+            r.put("name", target);
         }, true);
         return 0;
     }

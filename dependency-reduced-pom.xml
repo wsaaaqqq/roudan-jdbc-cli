@@ -4,7 +4,7 @@
   <groupId>io.github.wsaaaqqq</groupId>
   <artifactId>roudan-jdbc-cli</artifactId>
   <name>roudan-jdbc-cli</name>
-  <version>0.4.0</version>
+  <version>0.5.1</version>
   <description>JDBC CLI tool for AI agents</description>
   <url>https://github.com/wsaaaqqq/roudan-jdbc-cli</url>
   <licenses>
@@ -108,14 +108,14 @@
     </dependency>
   </dependencies>
   <properties>
-    <lombok.version>1.18.40</lombok.version>
-    <maven.compiler.target>${java.version}</maven.compiler.target>
     <snakeyaml.version>2.0</snakeyaml.version>
-    <picocli.version>4.7.6</picocli.version>
-    <slf4j.version>1.7.36</slf4j.version>
     <java.version>1.8</java.version>
     <maven.compiler.source>${java.version}</maven.compiler.source>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <hutool.version>5.8.25</hutool.version>
+    <lombok.version>1.18.40</lombok.version>
+    <maven.compiler.target>${java.version}</maven.compiler.target>
+    <picocli.version>4.7.6</picocli.version>
+    <slf4j.version>1.7.36</slf4j.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 </project>

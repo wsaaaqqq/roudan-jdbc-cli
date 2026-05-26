@@ -41,6 +41,7 @@ import java.util.concurrent.Callable;
                 RollbackCommand.class,
                 LoginCommand.class,
                 LogoutCommand.class,
+                RenameCommand.class,
                 LsCommand.class,
                 UseCommand.class,
                 ConnectionsCommand.class,
@@ -151,7 +152,7 @@ public class Main implements Callable<Integer> {
         System.out.println("  local cur=${COMP_WORDS[COMP_CWORD]}");
         System.out.println("  local prev=${COMP_WORDS[COMP_CWORD-1]}");
         System.out.println("  if [ $COMP_CWORD -eq 1 ]; then");
-        System.out.println("    COMPREPLY=($(compgen -W \"query count modify tables describe test begin commit rollback login logout ls use connections demo exec import export gen tail help update drv env\" -- \"$cur\"))");
+        System.out.println("    COMPREPLY=($(compgen -W \"query count modify tables describe test begin commit rollback login logout rename ls use connections demo exec import export gen tail help update drv env\" -- \"$cur\"))");
         System.out.println("  fi");
         System.out.println("}");
         System.out.println("complete -F _roudan_completion roudan");
