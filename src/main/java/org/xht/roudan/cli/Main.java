@@ -26,8 +26,8 @@ import java.util.concurrent.Callable;
 @Setter
 @CommandLine.Command(
         name = "roudan",
-        aliases = {"rd"},
-        description = "JDBC CLI tool for AI agents (also available as: rd)",
+        aliases = {"rdc"},
+        description = "JDBC CLI tool for AI agents (also available as: rdc)",
         mixinStandardHelpOptions = true,
         version = "0.5.1",
         subcommands = {
