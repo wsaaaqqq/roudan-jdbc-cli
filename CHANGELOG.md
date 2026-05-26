@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.5.2 — 2026-05-26
+
+### Features
+- **`ls` command**: list connections with name/url/user/current, flat array output
+- **`rename` command**: rename a saved connection
+- **`logout --name`**: remove a specific connection by name
+- **`rdc` alias**: shorter command alias, shown in `--help`
+
+### Fixes
+- `connections` output uses `current` boolean flag instead of `*` suffix
+- Added `slf4j-nop` to suppress SLF4J startup warnings
+
 ## v0.5.1 — 2026-05-19
 
 ### Changed
