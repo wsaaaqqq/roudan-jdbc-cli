@@ -1,9 +1,9 @@
 package org.xht.roudan.cli.command;
 
+import cn.hutool.json.JSONUtil;
 import org.xht.roudan.cli.Main;
 import org.xht.roudan.cli.config.CliConfig;
 import org.xht.roudan.cli.config.ConnectionStore;
-import org.xht.roudan.cli.output.ResultWriter;
 import picocli.CommandLine;
 
 import java.util.ArrayList;
@@ -25,11 +25,7 @@ public class LsCommand implements Callable<Integer> {
     public Integer call() {
         Map<String, CliConfig> all = ConnectionStore.list();
         if (all.isEmpty()) {
-            ResultWriter.printResult(r -> {
-                r.put("success", true);
-                r.put("connections", new ArrayList<>());
-                r.put("message", "no saved connections");
-            }, true);
+            System.out.println("[]");
             return 0;
         }
 
@@ -45,10 +41,7 @@ public class LsCommand implements Callable<Integer> {
             list.add(item);
         }
 
-        ResultWriter.printResult(r -> {
-            r.put("success", true);
-            r.put("connections", list);
-        }, true);
+        System.out.println(JSONUtil.toJsonPrettyStr(list));
         return 0;
     }
 }
