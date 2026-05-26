@@ -33,12 +33,15 @@ public class ConnectionsCommand implements Callable<Integer> {
             return 0;
         }
 
+        String current = ConnectionStore.getCurrentName();
         List<Map<String, Object>> list = new ArrayList<>();
         for (Map.Entry<String, CliConfig> e : all.entrySet()) {
             Map<String, Object> item = new LinkedHashMap<>();
-            item.put("name", e.getKey());
+            String name = e.getKey().replace(" *", "");
+            item.put("name", name);
             item.put("url", e.getValue().getUrl());
             item.put("user", e.getValue().getUser());
+            item.put("current", name.equals(current));
             list.add(item);
         }
 

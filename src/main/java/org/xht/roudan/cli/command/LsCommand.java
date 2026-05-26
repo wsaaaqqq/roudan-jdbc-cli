@@ -14,7 +14,7 @@ import java.util.concurrent.Callable;
 
 @CommandLine.Command(
         name = "ls",
-        description = "List saved connection names"
+        description = "List saved connections with url and user"
 )
 public class LsCommand implements Callable<Integer> {
 
@@ -33,11 +33,21 @@ public class LsCommand implements Callable<Integer> {
             return 0;
         }
 
-        List<String> names = new ArrayList<>(all.keySet());
+        String current = ConnectionStore.getCurrentName();
+        List<Map<String, Object>> list = new ArrayList<>();
+        for (Map.Entry<String, CliConfig> e : all.entrySet()) {
+            Map<String, Object> item = new LinkedHashMap<>();
+            String name = e.getKey().replace(" *", "");
+            item.put("name", name);
+            item.put("url", e.getValue().getUrl());
+            item.put("user", e.getValue().getUser());
+            item.put("current", name.equals(current));
+            list.add(item);
+        }
 
         ResultWriter.printResult(r -> {
             r.put("success", true);
-            r.put("connections", names);
+            r.put("connections", list);
         }, true);
         return 0;
     }
