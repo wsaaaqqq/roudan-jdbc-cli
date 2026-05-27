@@ -20,15 +20,9 @@ JDBC CLI 工具，专为 AI agent 设计。可通过 JDBC 连接任何数据库�
 
 ### 安装
 
-```bash
+\`\`\`bash
 npm install -g roudan-jdbc-cli    # 已内含 jar，安装即用
-
-# 或 Docker
-docker pull wsaaaqqq/roudan-jdbc-cli
-
-# 或一行 curl 安装
-curl -fsSL https://raw.githubusercontent.com/wsaaaqqq/roudan-jdbc-cli/main/install.sh | bash
-```
+\`\`\`
 
 ### 使用
 

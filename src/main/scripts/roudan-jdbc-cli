@@ -1,8 +1,0 @@
-#!/bin/sh
-DIR="$(dirname "$0")"
-if [ -f "$DIR/lib/roudan-jdbc-cli.jar" ]; then
-    exec java -jar "$DIR/lib/roudan-jdbc-cli.jar" "$@"
-else
-    echo "roudan: jar not found. Download from https://github.com/wsaaaqqq/roudan-jdbc-cli/releases/latest"
-    exit 1
-fi

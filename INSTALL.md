@@ -1,53 +1,27 @@
-# roudan -- AI Agent Installation Guide
+# roudan -- Installation Guide
 
 ## Prerequisites
 
 - **Java 8+** (JRE or JDK) -- install from https://adoptium.net
-- **JDBC driver JAR** for your database (MySQL, PostgreSQL, Oracle, DM, etc.)
+- **JDBC driver JAR** for your database (MySQL, PostgreSQL, DM, etc.)
 
-## Install roudan-jdbc-cli
-
-### Option A: One-line install (recommended)
+## Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/wsaaaqqq/roudan-jdbc-cli/main/install.sh | bash
+npm install -g roudan-jdbc-cli    # jar included, ready to use
 ```
 
-Downloads the CLI jar to `~/.roudan-cli/lib/` and creates a wrapper. Requires Java 8+ pre-installed.
-
-### Option B: npm (recommended)
-
-```bash
-npm install -g roudan-jdbc-cli
-```
-
-Jar included in the package. Just add Java 8+ and you're ready.
-
-### Option C: Docker
-
-```bash
-docker pull wsaaaqqq/roudan-jdbc-cli:latest
-alias roudan='docker run --rm -v "$(pwd):/workdir" -w /workdir wsaaaqqq/roudan-jdbc-cli'
-```
-
-### Option D: Manual download
-
-```bash
-mkdir -p ~/.roudan-cli/lib
-curl -fL -o ~/.roudan-cli/lib/roudan-jdbc-cli.jar \
-  https://github.com/wsaaaqqq/roudan-jdbc-cli/releases/latest/download/roudan-jdbc-cli.jar
-java -jar ~/.roudan-cli/lib/roudan-jdbc-cli.jar --help
-```
-
-## Install OpenCode / Claude Code Skill
+## Install OpenCode Skill
 
 ```bash
 mkdir -p ~/.agents/skills/roudan-jdbc/reference
-curl -fsSL -o ~/.agents/skills/roudan-jdbc/SKILL.md \
-  https://raw.githubusercontent.com/wsaaaqqq/roudan-jdbc-cli/main/skill/SKILL.md
+for f in SKILL query count modify tables describe test; do
+  curl -fsSL -o ~/.agents/skills/roudan-jdbc/${f}.md \
+    https://raw.githubusercontent.com/wsaaaqqq/roudan-jdbc-cli/main/skill/${f}.md
+done
 for f in query count modify tables describe test; do
-  curl -fsSL -o ~/.agents/skills/roudan-jdbc/reference/$f.md \
-    https://raw.githubusercontent.com/wsaaaqqq/roudan-jdbc-cli/main/skill/reference/$f.md
+  curl -fsSL -o ~/.agents/skills/roudan-jdbc/reference/${f}.md \
+    https://raw.githubusercontent.com/wsaaaqqq/roudan-jdbc-cli/main/skill/reference/${f}.md
 done
 ```
 
@@ -55,7 +29,4 @@ done
 
 ```bash
 npm update -g roudan-jdbc-cli
-# Then download latest jar:
-curl -fL -o ~/.roudan-cli/lib/roudan-jdbc-cli.jar \
-  https://github.com/wsaaaqqq/roudan-jdbc-cli/releases/latest/download/roudan-jdbc-cli.jar
 ```

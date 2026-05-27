@@ -26,20 +26,9 @@ jobs:
       - name: Build with Maven
         run: mvn -B package -DskipTests
 
-      - name: Create distribution package
-        run: |
-          mkdir -p dist/roudan-jdbc-cli-${{ github.ref_name }}
-          cp target/roudan-jdbc-cli.jar dist/roudan-jdbc-cli-${{ github.ref_name }}/lib/
-          cp src/main/scripts/roudan-jdbc-cli.bat dist/roudan-jdbc-cli-${{ github.ref_name }}/
-          cp src/main/scripts/roudan-jdbc-cli dist/roudan-jdbc-cli-${{ github.ref_name }}/
-          chmod +x dist/roudan-jdbc-cli-${{ github.ref_name }}/roudan-jdbc-cli
-          cd dist
-          zip -r roudan-jdbc-cli-${{ github.ref_name }}.zip roudan-jdbc-cli-${{ github.ref_name }}/
-
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/roudan-jdbc-cli-*.zip
             target/roudan-jdbc-cli.jar
           generate_release_notes: true
