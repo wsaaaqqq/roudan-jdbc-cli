@@ -17,3 +17,6 @@ Thumbs.db
 *~
 .vscode/
 doc/
+META-INF/
+tmp/
+dependency-reduced-pom.xml
