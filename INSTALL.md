@@ -15,13 +15,13 @@ curl -fsSL https://raw.githubusercontent.com/wsaaaqqq/roudan-jdbc-cli/main/insta
 
 Downloads the CLI jar to `~/.roudan-cli/lib/` and creates a wrapper. Requires Java 8+ pre-installed.
 
-### Option B: npm
+### Option B: npm (recommended)
 
 ```bash
 npm install -g roudan-jdbc-cli
 ```
 
-Installs the wrapper only. You must also download the jar (see Option D) to `~/.roudan-cli/lib/`.
+Jar included in the package. Just add Java 8+ and you're ready.
 
 ### Option C: Docker
 

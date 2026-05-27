@@ -27,19 +27,13 @@ curl -fsSL https://raw.githubusercontent.com/wsaaaqqq/roudan-jdbc-cli/main/INSTA
 ### Install
 
 ```bash
-# npm wrapper (recommended): invokes java -jar
-npm install -g roudan-jdbc-cli
-
-# Download the jar to ~/.roudan-cli/lib/
-mkdir -p ~/.roudan-cli/lib
-curl -fL -o ~/.roudan-cli/lib/roudan-jdbc-cli.jar \
-  https://github.com/wsaaaqqq/roudan-jdbc-cli/releases/latest/download/roudan-jdbc-cli.jar
-
-# Or one-line install
-curl -fsSL https://raw.githubusercontent.com/wsaaaqqq/roudan-jdbc-cli/main/install.sh | bash
+npm install -g roudan-jdbc-cli    # jar included, ready to use
 
 # Or Docker
 docker pull wsaaaqqq/roudan-jdbc-cli
+
+# Or one-line curl install
+curl -fsSL https://raw.githubusercontent.com/wsaaaqqq/roudan-jdbc-cli/main/install.sh | bash
 ```
 
 ### Usage

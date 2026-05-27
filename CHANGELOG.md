@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.5.5 -- 2026-05-27
+
+### Changed
+- **JAR bundled in npm package** -- `npm install -g` includes the CLI jar (no separate download)
+- `rd.js` simplified: uses bundled jar, no download logic
+- Removed `.roudan-cli/` dependency; jar lives in npm global dir
+
 ## v0.5.4 -- 2026-05-27
 
 ### Removed
