@@ -1,168 +1,90 @@
-﻿# roudan-jdbc-cli
+# roudan-jdbc-cli
 
-[English](../README.md) | [简体中文](README.zh.md) | [繁體中文](README.zht.md) | [한국어](README.ko.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [Italiano](README.it.md) | [Dansk](README.da.md) | [日本語](README.ja.md) | [Polski](README.pl.md) | [Русский](README.ru.md) | [Bosanski](README.bs.md) | [العربية](README.ar.md) | [Norsk](README.no.md) | [Português (Brasil)](README.br.md) | [ไทย](README.th.md) | [Türkçe](README.tr.md) | [Українська](README.uk.md) | [বাংলা](README.bn.md) | [Ελληνικά](README.gr.md) | [Tiếng Việt](README.vi.md)
+[English](../README.md) | [簡體中文](README.zh.md) | [繁體中文](README.zht.md)
 
-> ⚠️ **This translation is not yet available.** The English version is shown below.  
-> Help us translate! [Edit on GitHub](https://github.com/wsaaaqqq/roudan-jdbc-cli)
+JDBC CLI 工具，專為 AI agent 設計。可透過 JDBC 連接任何資料庫執行 SQL，輸出 JSON 到 stdout。
 
-JDBC CLI tool for AI agents. Executes SQL against any JDBC database, outputs JSON to stdout.
+## 一鍵啟動
 
-## One-Click Activation (Prompt for AI Agents)
-
-Copy this line and paste it to OpenCode / Claude Code / Cursor:
+複製這行貼到 OpenCode / Claude Code / Cursor：
 
 > Install and use roudan-jdbc-cli, a JDBC CLI that lets me execute SQL against any database:  
 > https://raw.githubusercontent.com/wsaaaqqq/roudan-jdbc-cli/main/INSTALL.md
 
-Or let the agent read the install guide directly:
+## 快速開始
+
+### 前置條件
+
+- **Java 8+** (JRE 或 JDK，需在 PATH 上) — 從 https://adoptium.net 安裝
+- 資料庫對應的 **JDBC 驅動 JAR**（MySQL, PostgreSQL, DM 等）
+
+### 安裝
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/wsaaaqqq/roudan-jdbc-cli/main/INSTALL.md
-```
+npm install -g roudan-jdbc-cli    # 已內含 jar，安裝即用
 
-## Quick Start
-
-### Prerequisites
-
-- Java 8+
-
-### Install
-
-```bash
-# npm (recommended)
-npm install -g roudan-jdbc-cli
-
-# Docker
+# 或 Docker
 docker pull wsaaaqqq/roudan-jdbc-cli
 
-# Direct download
-curl -fL -o $HOME/.roudan-cli/lib/roudan-jdbc-cli.jar https://github.com/wsaaaqqq/roudan-jdbc-cli/releases/latest/download/roudan-jdbc-cli.jar
+# 或一行 curl 安裝
+curl -fsSL https://raw.githubusercontent.com/wsaaaqqq/roudan-jdbc-cli/main/install.sh | bash
 ```
 
-### Usage
+### 使用
 
 ```bash
-# ====== Connection Persistence (login once, use anywhere) ======
+# ====== 連線持久化（一次登入，隨處使用）======
 
-# Login with CLI args
-rd -u jdbc:mysql://localhost:3306/test -n root -p pass -d com.mysql.cj.jdbc.Driver -j ./mysql-connector.jar login
+roudan -u jdbc:mysql://localhost:3306/test -n root -p pass -d com.mysql.cj.jdbc.Driver -j ./mysql-connector.jar login
+roudan login -f application-dm.yml -j DmJdbcDriver.jar
+roudan login -f multi.yml mydb
 
-# Login with YAML (auto-detect datasource from any nesting level)
-rd login -f application-dm.yml -j DmJdbcDriver.jar
+# 登入後省略連線參數
+roudan test
+roudan tables
+roudan query -s "SELECT * FROM T_USER" --limit 5
+roudan use mydb
+roudan connections
+roudan logout
 
-# Login with multi-datasource YAML, specify which datasource
-rd login -f multi.yml mydb
+# ====== 直連模式 ======
 
-# After login, all commands omit connection params:
-rd test
-rd tables
-rd query -s "SELECT * FROM T_USER" --limit 5
-
-# Use a different saved connection
-rd use mydb
-
-# One-off use of a saved connection
-rd --name mydb tables
-
-# List saved connections
-rd connections
-
-# Logout (clear current connection)
-rd logout
-
-# ====== Direct Connection (one-shot, no login) ======
-
-# Test connection
-rd -u jdbc:mysql://localhost:3306/test -n root -p pass -d com.mysql.cj.jdbc.Driver -j ./mysql-connector.jar test
-
-# Query
-rd query -s "SELECT * FROM T_USER" --limit 5
-
-# Named params
-rd query -s "SELECT * FROM T_USER WHERE id = :id" --named -a '{"id":"U01"}'
-
-# Insert
-rd modify -s "INSERT INTO T_USER (id, name) VALUES (:id, :name)" --named -a '{"id":"U01","name":"Alice"}'
-
-# List tables
-rd tables
-
-# Describe table
-rd describe -t T_USER
+roudan -u jdbc:mysql://localhost:3306/test -n root -p pass -d com.mysql.cj.jdbc.Driver -j ./mysql-connector.jar test
+roudan query -s "SELECT * FROM T_USER" --limit 5
+roudan query -s "SELECT * FROM T_USER WHERE id = :id" --named -a '{"id":"U01"}'
+roudan tables
+roudan describe -t T_USER
+roudan exec -f script.sql
 ```
 
-## Commands
+## 命令
 
-| Command | Description |
-|---------|------------|
-| `login` | Save connection for reuse (CLI args or `-f yml`) |
-| `logout` | Clear current saved connection |
-| `use` | Switch to a saved connection by name |
-| `connections` | List all saved connections |
-| `query` | SELECT query |
-| `count` | COUNT query |
+| 命令 | 說明 |
+|------|------|
+| `login` | 儲存連線（CLI 參數或 `-f yml`） |
+| `logout` | 清除當前連線 |
+| `use` | 切換到已儲存的連線 |
+| `ls` | 列出已儲存的連線及詳情 |
+| `rename` | 重新命名已儲存的連線 |
+| `connections` | 列出所有已儲存的連線 |
+| `query` | SELECT 查詢 |
+| `count` | COUNT 查詢 |
 | `modify` | INSERT/UPDATE/DELETE/DDL |
-| `tables` | List tables/views |
-| `describe` | Show table schema |
-| `test` | Connection test |
-| `begin` | Start transaction |
-| `commit` | Commit transaction |
-| `rollback` | Rollback transaction |
-| `--name <name>` | (global) One-off use of a saved connection |
+| `tables` | 列出表/檢視 |
+| `describe` | 檢視表結構 |
+| `test` | 連線測試 |
+| `exec` | 執行 SQL 檔案（單交易） |
+| `import` | 從 CSV/JSON 匯入資料 |
+| `export` | 匯出查詢結果到 CSV/JSON |
+| `gen` | 生成 DDL 或 INSERT |
+| `tail` | 監控表變化 |
+| `begin` | 開始交易 |
+| `commit` | 提交交易 |
+| `rollback` | 回滾交易 |
 
-### Config Priority
+`login` 將連線儲存到 `~/.roudan/connections.json`，之後無需重複傳參。
 
-```
-CLI args (highest) > Environment variables > Saved connections > YAML config files
-```
-
-The `login` command saves connection parameters to `~/.roudan/connections.json`. After login, all subsequent commands reuse the saved connection automatically.
-
-Full reference: [CLI_REFERENCE.md](doc/CLI_REFERENCE.md)
-
-## OpenCode Skill
-
-This repo includes an [OpenCode](https://opencode.ai) skill:
-
-```bash
-# Install skill
-cp -r skill ~/.agents/skills/roudan-jdbc
-```
-
-Or add to `opencode.json`:
-
-```json
-{
-  "skills": {
-    "paths": ["/path/to/roudan-jdbc-cli/skill"]
-  }
-}
-```
-
-## Build
-
-```bash
-# Prerequisite: build roudan-core
-cd ../roudan-core && mvn install -DskipTests
-
-# Build this project
-cd ../roudan-jdbc-cli
-mvn package
-# Output: target/roudan-jdbc-cli.jar
-```
-
-## Architecture
-
-```
-roudan-jdbc-cli
-  ├── Picocli CLI entry �?parse args
-  ├── ConfigLoader    �?Config merge (YAML + CLI)
-  ├── DriverLoader    �?URLClassLoader dynamically loads JDBC drivers
-  ├── DataSourceFactory �?Register with roudan-core
-  └── CommandExecutor �?RD.query() / RD.modify() / JDBC metadata
-```
-
-Built on [roudan-core](https://github.com/wsaaaqqq/xdb).
+完整參考：[CLI_REFERENCE.md](../doc/CLI_REFERENCE.md)
 
 ## License
 

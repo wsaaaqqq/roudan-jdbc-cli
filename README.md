@@ -1,6 +1,6 @@
 ﻿# roudan-jdbc-cli
 
-[English](README.md) | [简体中文](readme/README.zh.md) | [繁體中文](readme/README.zht.md) | [한국어](readme/README.ko.md) | [Deutsch](readme/README.de.md) | [Español](readme/README.es.md) | [Français](readme/README.fr.md) | [Italiano](readme/README.it.md) | [Dansk](readme/README.da.md) | [日本語](readme/README.ja.md) | [Polski](readme/README.pl.md) | [Русский](readme/README.ru.md) | [Bosanski](readme/README.bs.md) | [العربية](readme/README.ar.md) | [Norsk](readme/README.no.md) | [Português (Brasil)](readme/README.br.md) | [ไทย](readme/README.th.md) | [Türkçe](readme/README.tr.md) | [Українська](readme/README.uk.md) | [বাংলা](readme/README.bn.md) | [Ελληνικά](readme/README.gr.md) | [Tiếng Việt](readme/README.vi.md)
+[English](README.md) | [简体中文](readme/README.zh.md) | [繁體中文](readme/README.zht.md)
 
 JDBC CLI tool for AI agents. Executes SQL against any JDBC database, outputs JSON to stdout.
 
