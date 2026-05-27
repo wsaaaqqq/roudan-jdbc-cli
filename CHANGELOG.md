@@ -1,6 +1,19 @@
 # Changelog
 
-## v0.5.2 — 2026-05-26
+## v0.5.4 -- 2026-05-27
+
+### Removed
+- **install.js** (postinstall download) -- npm install only installs wrapper
+- **Bundled JRE** -- no longer auto-downloads JRE; user must install Java 8+
+- **prepare-jre.bat** / **public/** -- JRE asset preparation scripts
+
+### Changed
+- `npm/rd.js`: checks for jar, guides user to download if missing
+- `install.sh`: simplified, downloads jar only
+- `package.json`: removed `postinstall` script
+- Startup scripts: removed `jre8` path, use system `java` only
+
+## v0.5.2 -- 2026-05-26
 
 ### Features
 - **`ls` command**: list connections with name/url/user/current, flat array output
@@ -12,17 +25,17 @@
 - `connections` output uses `current` boolean flag instead of `*` suffix
 - Added `slf4j-nop` to suppress SLF4J startup warnings
 
-## v0.5.1 — 2026-05-19
+## v0.5.1 -- 2026-05-19
 
 ### Changed
-- **Simplified install**: No JRE download — uses system Java 8+
+- **Simplified install**: No JRE download -- uses system Java 8+
 - install.js: added 180s timeout, progress indicator without Content-Length
 - Only downloads own jar from GitHub Releases, zero external URLs
 
-## v0.5.0 — 2026-05-19
+## v0.5.0 -- 2026-05-19
 
 ### Breaking
-- **Renamed command**: `rd` → `roudan` (no aliases, avoids Windows/powershell conflicts)
+- **Renamed command**: `rd` -> `roudan` (no aliases, avoids Windows/powershell conflicts)
 
 ### Features
 - **Local driver directory**: `~/.roudan/drivers/<name>/` auto-detected on connect
@@ -31,7 +44,7 @@
 ### Fixes
 - `rd.js` wrapper: `spawnSync` replaces `execSync` (fixes quoted arg passing on Windows)
 
-## v0.4.0 — 2026-05-17
+## v0.4.0 -- 2026-05-17
 
 ### Features
 - **New commands**: `exec`, `import`, `export`, `gen`, `tail`
@@ -42,39 +55,20 @@
 
 ### Fixes
 - Derby multi-JAR auto-download (derbyclient + derbyshared)
-- Fuzzy matching threshold tightened (≤2 + prefix priority)
+- Fuzzy matching threshold tightened (<=2 + prefix priority)
 - Update command GitHub release URL corrected
 
-## v0.1.0 — 2026-05-15
+## v0.1.0 -- 2026-05-15
 
 ### Features
-
 - **6 core commands**: `query`, `count`, `modify`, `tables`, `describe`, `test`
 - **3 transaction commands**: `begin`, `commit`, `rollback`
 - **Positional params** (`?`) and **named params** (`:paramName`) SQL styles
-- **Config auto-discovery**: CLI args > env vars > cwd config > ~/.roudan config
-- **Multi-datasource** YAML support with `--datasource` switch
-- **HikariCP connection pool** with configurable pool settings
-- **SQL file execution** via `-f/--sql-file`
-- **Output formats**: JSON (compact/pretty), CSV, table
-- **Limit & pagination**: `--limit`, `--page`/`--size`
-- **Dry-run mode**: `--dry-run` prints SQL without execution
-- **Connection timeout**: `--connect-timeout <ms>`
+- HikariCP connection pool, SQL file execution, output formats, error handling
 
 ### Distribution
-
 - GitHub Releases (fat-jar + startup scripts)
-- npm: `npm install roudan-jdbc-cli` (@roudan/jdbc-cli)
+- npm: `npm install -g roudan-jdbc-cli`
 - Docker: `docker run wsaaaqqq/roudan-jdbc-cli`
-- One-line install: `curl -fsSL https://raw.githubusercontent.com/wsaaaqqq/roudan-jdbc-cli/main/install.sh | bash`
+- One-line install: `curl -fsSL ... | bash`
 - OpenCode skill: `skill/SKILL.md`
-
-### Test Coverage
-
-34 end-to-end tests covering:
-- H2 default, MySQL mode, PostgreSQL mode
-- All 9 CLI commands
-- Multi-datasource switching
-- Config auto-discovery (env, cwd, YAML)
-- Error handling (SQL errors, missing args, connection errors)
-- Type preservation in JSON output

@@ -1,6 +1,6 @@
 {
   "name": "roudan-jdbc-cli",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "description": "JDBC CLI tool for AI agents - execute SQL against any JDBC database, output JSON",
   "homepage": "https://github.com/wsaaaqqq/roudan-jdbc-cli",
   "repository": {
@@ -12,12 +12,9 @@
     "roudan": "./bin/rd.js"
   },
   "files": [
-    "bin/",
-    "lib/",
-    "install.js"
+    "bin/"
   ],
   "scripts": {
-    "postinstall": "node install.js"
   },
   "keywords": [
     "jdbc",

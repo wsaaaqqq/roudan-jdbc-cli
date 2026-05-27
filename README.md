@@ -21,19 +21,25 @@ curl -fsSL https://raw.githubusercontent.com/wsaaaqqq/roudan-jdbc-cli/main/INSTA
 
 ### Prerequisites
 
-- Java 8+ (JRE or JDK on PATH)
+- **Java 8+** (JRE or JDK on PATH) — install from https://adoptium.net
+- **JDBC driver JAR** for your database (MySQL, PostgreSQL, DM, etc.)
 
 ### Install
 
 ```bash
-# npm (recommended)
+# npm wrapper (recommended): invokes java -jar
 npm install -g roudan-jdbc-cli
 
-# Docker
-docker pull wsaaaqqq/roudan-jdbc-cli
+# Download the jar to ~/.roudan-cli/lib/
+mkdir -p ~/.roudan-cli/lib
+curl -fL -o ~/.roudan-cli/lib/roudan-jdbc-cli.jar \
+  https://github.com/wsaaaqqq/roudan-jdbc-cli/releases/latest/download/roudan-jdbc-cli.jar
 
-# Direct download
+# Or one-line install
 curl -fsSL https://raw.githubusercontent.com/wsaaaqqq/roudan-jdbc-cli/main/install.sh | bash
+
+# Or Docker
+docker pull wsaaaqqq/roudan-jdbc-cli
 ```
 
 ### Usage

@@ -29,7 +29,7 @@ import java.util.concurrent.Callable;
         aliases = {"rdc"},
         description = "JDBC CLI tool for AI agents (also available as: rdc)",
         mixinStandardHelpOptions = true,
-        version = "0.5.3",
+        version = "0.5.4",
         subcommands = {
                 QueryCommand.class,
                 CountCommand.class,

@@ -1,8 +1,8 @@
 @echo off
 set DIR=%~dp0
-set JAVA=%DIR%jre8\bin\java.exe
-if exist "%JAVA%" (
-    "%JAVA%" -jar "%DIR%lib\roudan-jdbc-cli.jar" %*
-) else (
+if exist "%DIR%lib\roudan-jdbc-cli.jar" (
     java -jar "%DIR%lib\roudan-jdbc-cli.jar" %*
+) else (
+    echo roudan: jar not found. Download from https://github.com/wsaaaqqq/roudan-jdbc-cli/releases/latest
+    exit /b 1
 )

@@ -13,10 +13,13 @@ metadata:
 
 ## 安装
 
-前置要求：Java 8+
+前置要求：Java 8+、数据库 JDBC 驱动 JAR
 
 ```bash
-npm install -g roudan-jdbc-cli
+npm install -g roudan-jdbc-cli                          # 安装 npm 包装器
+mkdir -p ~/.roudan-cli/lib
+curl -fL -o ~/.roudan-cli/lib/roudan-jdbc-cli.jar \     # 下载 CLI jar
+  https://github.com/wsaaaqqq/roudan-jdbc-cli/releases/latest/download/roudan-jdbc-cli.jar
 ```
 
 验证：`roudan --help`

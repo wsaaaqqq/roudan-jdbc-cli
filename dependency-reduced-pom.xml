@@ -4,7 +4,7 @@
   <groupId>io.github.wsaaaqqq</groupId>
   <artifactId>roudan-jdbc-cli</artifactId>
   <name>roudan-jdbc-cli</name>
-  <version>0.5.2</version>
+  <version>0.5.4</version>
   <description>JDBC CLI tool for AI agents</description>
   <url>https://github.com/wsaaaqqq/roudan-jdbc-cli</url>
   <licenses>

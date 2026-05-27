@@ -29,7 +29,7 @@ npm install -g roudan-jdbc-cli
 docker pull wsaaaqqq/roudan-jdbc-cli
 
 # 直接下载
-curl -fsSL https://raw.githubusercontent.com/wsaaaqqq/roudan-jdbc-cli/main/install.sh | bash
+curl -fL -o $HOME/.roudan-cli/lib/roudan-jdbc-cli.jar https://github.com/wsaaaqqq/roudan-jdbc-cli/releases/latest/download/roudan-jdbc-cli.jar
 ```
 
 ### 使用
