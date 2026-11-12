@@ -27,8 +27,8 @@ import java.util.Map;
 
 public class H2IntegrationTest {
 
-    private static final String H2_JAR = System.getProperty("user.home")
-            + "/.m2/repository/com/h2database/h2/2.2.220/h2-2.2.220.jar";
+    private static final String H2_JAR = new File(java.net.URI.create(org.h2.Driver.class.getProtectionDomain()
+            .getCodeSource().getLocation().toExternalForm())).getAbsolutePath();
     private static final String H2_DRIVER = "org.h2.Driver";
     private static final String H2_URL = "jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1";
     private File cwdConfigFile;
@@ -671,27 +671,17 @@ public class H2IntegrationTest {
 
     @SuppressWarnings("unchecked")
     private static void setEnvVar(String key, String value) throws Exception {
-        Class<?> processEnvironment = Class.forName("java.lang.ProcessEnvironment");
-        java.lang.reflect.Field theEnvironmentField = processEnvironment.getDeclaredField("theEnvironment");
-        theEnvironmentField.setAccessible(true);
-        Map<String, String> env = (Map<String, String>) theEnvironmentField.get(null);
+        java.lang.reflect.Field field = System.getenv().getClass().getDeclaredField("m");
+        field.setAccessible(true);
+        Map<String, String> env = (Map<String, String>) field.get(System.getenv());
         env.put(key, value);
-        java.lang.reflect.Field ciEnvField = processEnvironment.getDeclaredField("theCaseInsensitiveEnvironment");
-        ciEnvField.setAccessible(true);
-        Map<String, String> ciEnv = (Map<String, String>) ciEnvField.get(null);
-        ciEnv.put(key, value);
     }
 
     @SuppressWarnings("unchecked")
     private static void removeEnvVar(String key) throws Exception {
-        Class<?> processEnvironment = Class.forName("java.lang.ProcessEnvironment");
-        java.lang.reflect.Field theEnvironmentField = processEnvironment.getDeclaredField("theEnvironment");
-        theEnvironmentField.setAccessible(true);
-        Map<String, String> env = (Map<String, String>) theEnvironmentField.get(null);
+        java.lang.reflect.Field field = System.getenv().getClass().getDeclaredField("m");
+        field.setAccessible(true);
+        Map<String, String> env = (Map<String, String>) field.get(System.getenv());
         env.remove(key);
-        java.lang.reflect.Field ciEnvField = processEnvironment.getDeclaredField("theCaseInsensitiveEnvironment");
-        ciEnvField.setAccessible(true);
-        Map<String, String> ciEnv = (Map<String, String>) ciEnvField.get(null);
-        ciEnv.remove(key);
     }
 }

@@ -6,7 +6,7 @@
 
     <groupId>io.github.wsaaaqqq</groupId>
     <artifactId>roudan-jdbc-cli</artifactId>
-    <version>0.5.5</version>
+    <version>0.5.6</version>
     <packaging>jar</packaging>
     <name>roudan-jdbc-cli</name>
     <description>JDBC CLI tool for AI agents</description>
@@ -29,13 +29,14 @@
         <hutool.version>5.8.25</hutool.version>
         <lombok.version>1.18.40</lombok.version>
         <slf4j.version>1.7.36</slf4j.version>
+        <test.jvm.args></test.jvm.args>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>io.github.wsaaaqqq</groupId>
             <artifactId>roudan-core</artifactId>
-            <version>0.0.1</version>
+            <version>0.0.10</version>
         </dependency>
 
         <dependency>
@@ -170,9 +171,21 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.2.5</version>
                 <configuration>
-                    <argLine>--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED</argLine>
+                    <argLine>${test.jvm.args}</argLine>
                 </configuration>
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>test-java9-plus</id>
+            <activation>
+                <jdk>[9,)</jdk>
+            </activation>
+            <properties>
+                <test.jvm.args>--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED</test.jvm.args>
+            </properties>
+        </profile>
+    </profiles>
 </project>

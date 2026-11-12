@@ -3,9 +3,12 @@ package org.xht.roudan.cli.command;
 import org.xht.roudan.cli.Main;
 import org.xht.roudan.cli.output.ResultWriter;
 import org.xht.rd.RD;
+import org.xht.rd.RDConfig;
 import picocli.CommandLine;
 
 import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -37,15 +40,12 @@ public class ExecCommand implements Callable<Integer> {
     public Integer call() throws Exception {
         long start = System.currentTimeMillis();
         try {
+            String rawSql = SqlInput.read(sql, file);
             Main.init(
                     main.getConfigFile(), main.getJdbcUrl(), main.getUser(),
                     main.getPassword(), main.getDriverClass(), main.getDriverJar(),
                     main.getDatasourceName(), main.isShowSql(), main.getConnectTimeout(), main.getSavedName()
             );
-
-            String rawSql = sql != null ? sql : cn.hutool.core.io.FileUtil.readUtf8String(file);
-            if (rawSql == null)
-                throw new IllegalArgumentException("Either -s/--sql or -f/--file is required");
 
             List<String> stmts = splitStatements(rawSql);
 
@@ -61,95 +61,95 @@ public class ExecCommand implements Callable<Integer> {
             }
 
             boolean isTransaction = "transaction".equalsIgnoreCase(mode);
-
-            Connection conn = RD.getConnection();
-            boolean originalAutoCommit = conn.getAutoCommit();
-            if (isTransaction) {
-                conn.setAutoCommit(false);
-            }
-
-            try {
-                List<Map<String, Object>> results = new ArrayList<>();
-                boolean allSucceeded = true;
-                int failedIndex = -1;
-                String failedError = null;
-
-                for (int i = 0; i < stmts.size(); i++) {
-                    final int stmtIdx = i;
-                    String stmt = stmts.get(i);
-                    Map<String, Object> result = executeSingle(stmt);
-                    result.put("statementIndex", stmtIdx);
-                    result.put("sql", stmt);
-                    results.add(result);
-
-                    if (!Boolean.TRUE.equals(result.get("success")) && allSucceeded) {
-                        allSucceeded = false;
-                        failedIndex = stmtIdx;
-                        failedError = (String) result.get("error");
-                        if (isTransaction) {
-                            break;
+            Map<String, Object> report;
+            try (Connection conn = RD.getConnection()) {
+                conn.setAutoCommit(!isTransaction);
+                try {
+                    report = executeStatements(conn, stmts, isTransaction, start);
+                } catch (Exception e) {
+                    if (isTransaction) {
+                        try {
+                            conn.rollback();
+                        } catch (Exception rollbackError) {
+                            e.addSuppressed(rollbackError);
                         }
                     }
+                    throw e;
                 }
-
-                if (isTransaction) {
-                    if (allSucceeded) {
-                        conn.commit();
-                    } else {
-                        conn.rollback();
-                    }
-                    conn.setAutoCommit(originalAutoCommit);
-                }
-
-                long elapsed = System.currentTimeMillis() - start;
-                final boolean finalAllOk = allSucceeded;
-                final int finalFailIdx = failedIndex;
-                final String finalFailErr = failedError;
-                if (!allSucceeded && isTransaction) {
-                    ResultWriter.printResult(r -> {
-                        r.put("success", false);
-                        r.put("statementIndex", finalFailIdx);
-                        r.put("rolledBack", true);
-                        r.put("error", finalFailErr);
-                        r.put("errorCode", "SQL_ERROR");
-                        r.put("partialResults", results);
-                        r.put("timeMs", elapsed);
-                    }, main.isPretty());
-                    return 1;
-                } else {
-                    ResultWriter.printResult(r -> {
-                        r.put("success", true);
-                        r.put("mode", mode);
-                        r.put("statementCount", stmts.size());
-                        r.put("results", results);
-                        r.put("timeMs", elapsed);
-                    }, main.isPretty());
-                    return finalAllOk ? 0 : 1;
-                }
-            } catch (Exception e) {
-                if (isTransaction) {
-                    try { conn.rollback(); } catch (Exception ignored) {}
-                    conn.setAutoCommit(originalAutoCommit);
-                }
-                throw e;
             }
+            ResultWriter.printResult(r -> r.putAll(report), main.isPretty());
+            return Boolean.TRUE.equals(report.get("success")) ? 0 : 1;
         } catch (Exception e) {
             ResultWriter.printError(e, System.currentTimeMillis() - start);
             return 1;
         }
     }
 
-    private Map<String, Object> executeSingle(String sql) {
+    private Map<String, Object> executeStatements(Connection conn, List<String> stmts,
+                                                  boolean isTransaction, long start) throws Exception {
+        List<Map<String, Object>> results = new ArrayList<>();
+        boolean allSucceeded = true;
+        int failedIndex = -1;
+        String failedError = null;
+
+        for (int i = 0; i < stmts.size(); i++) {
+            String stmt = stmts.get(i);
+            Map<String, Object> result = executeSingle(conn, stmt);
+            result.put("statementIndex", i);
+            result.put("sql", stmt);
+            results.add(result);
+
+            if (!Boolean.TRUE.equals(result.get("success")) && allSucceeded) {
+                allSucceeded = false;
+                failedIndex = i;
+                failedError = (String) result.get("error");
+                if (isTransaction) {
+                    break;
+                }
+            }
+        }
+
+        if (isTransaction) {
+            if (allSucceeded) {
+                conn.commit();
+            } else {
+                conn.rollback();
+            }
+        }
+
+        Map<String, Object> report = new LinkedHashMap<>();
+        report.put("success", allSucceeded);
+        if (!allSucceeded && isTransaction) {
+            report.put("statementIndex", failedIndex);
+            report.put("rolledBack", true);
+            report.put("error", failedError);
+            report.put("errorCode", "SQL_ERROR");
+            report.put("partialResults", results);
+        } else {
+            report.put("mode", mode);
+            report.put("statementCount", stmts.size());
+            report.put("results", results);
+        }
+        report.put("timeMs", System.currentTimeMillis() - start);
+        return report;
+    }
+
+    private Map<String, Object> executeSingle(Connection conn, String sql) {
         Map<String, Object> result = new LinkedHashMap<>();
-        try {
-            String trimmed = sql.trim().toUpperCase();
-            if (trimmed.startsWith("SELECT") || trimmed.startsWith("WITH") || trimmed.startsWith("SHOW") || trimmed.startsWith("DESC")) {
-                List<Map<String, Object>> rows = RD.query().sql(sql).executeQuery().result();
+        try (Statement statement = conn.createStatement()) {
+            if (RDConfig.isShowSql()) {
+                System.err.println(sql);
+            }
+            if (statement.execute(sql)) {
+                int rowCount = 0;
+                try (ResultSet rows = statement.getResultSet()) {
+                    while (rows.next()) rowCount++;
+                }
                 result.put("success", true);
                 result.put("type", "query");
-                result.put("rowCount", rows.size());
+                result.put("rowCount", rowCount);
             } else {
-                int affected = RD.modify().sql(sql).execute();
+                int affected = statement.getUpdateCount();
                 result.put("success", true);
                 result.put("type", "update");
                 result.put("affectedRows", affected);

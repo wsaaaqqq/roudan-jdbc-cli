@@ -5,9 +5,9 @@ A CLI tool invoked by AI agents via subprocess to execute SQL against JDBC datab
 Built on `roudan-core`. Input: command-line args. Output: JSON to stdout.
 
 ## Key Dependency
-- **`io.github.wsaaaqqq:roudan-core:0.0.1`** 鈥?lightweight JDBC wrapper
+- **`io.github.wsaaaqqq:roudan-core:0.0.10`** 鈥?lightweight JDBC wrapper
   - Source: `C:\ws\java\roudan-core`
-  - Core entry point: `org.xht.roudan.roudan` (static API)
+  - Core entry point: `org.xht.rd.RD` (static API)
   - Dependencies: hutool-core 5.8.25, hutool-cache 5.8.25, Lombok, Slf4j
 
 ## Build

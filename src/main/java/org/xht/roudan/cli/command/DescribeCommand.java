@@ -21,6 +21,9 @@ public class DescribeCommand implements Callable<Integer> {
     @CommandLine.Option(names = {"-t", "--table"}, required = true, description = "Table name")
     private String tableName;
 
+    @CommandLine.Option(names = {"-o", "--output"}, description = "Output format: json, json-pretty, csv, table")
+    private String outputFormat;
+
     @Override
     public Integer call() throws Exception {
         long start = System.currentTimeMillis();
@@ -54,13 +57,24 @@ public class DescribeCommand implements Callable<Integer> {
                 }
 
                 elapsed = System.currentTimeMillis() - start;
-                List<Map<String, Object>> finalCols = cols;
-                ResultWriter.printResult(r -> {
-                    r.put("success", true);
-                    r.put("table", tableName);
-                    r.put("columns", finalCols);
-                    r.put("timeMs", elapsed);
-                }, main.isPretty());
+                String format = outputFormat != null ? outputFormat : main.getOutputFormat();
+                if ("table".equalsIgnoreCase(format) || "csv".equalsIgnoreCase(format)) {
+                    List<String> headers = Arrays.asList("NAME", "TYPE", "SIZE", "NULLABLE", "PK");
+                    List<Object[]> rows = new ArrayList<>();
+                    for (Map<String, Object> col : cols) {
+                        rows.add(new Object[]{col.get("name"), col.get("type"), col.get("size"), col.get("nullable"), col.get("pk")});
+                    }
+                    ResultWriter.printQueryResult(headers, rows, rows.size(), elapsed,
+                            format, main.isPretty(), main.isNoHeader());
+                } else {
+                    List<Map<String, Object>> finalCols = cols;
+                    ResultWriter.printResult(r -> {
+                        r.put("success", true);
+                        r.put("table", tableName);
+                        r.put("columns", finalCols);
+                        r.put("timeMs", elapsed);
+                    }, main.isPretty() || "json-pretty".equalsIgnoreCase(format));
+                }
             }
             return 0;
         } catch (Exception e) {

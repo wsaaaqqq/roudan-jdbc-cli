@@ -29,7 +29,8 @@ import java.util.concurrent.Callable;
         aliases = {"rdc"},
         description = "JDBC CLI tool for AI agents (also available as: rdc)",
         mixinStandardHelpOptions = true,
-        version = "0.5.5",
+        scope = CommandLine.ScopeType.INHERIT,
+        version = "0.5.6",
         subcommands = {
                 QueryCommand.class,
                 CountCommand.class,
@@ -87,10 +88,12 @@ public class Main implements Callable<Integer> {
     @CommandLine.Option(names = {"-o", "--output"}, defaultValue = "json", description = "Output format: json, json-pretty, csv, table")
     private String outputFormat;
 
-    @CommandLine.Option(names = "--no-header", description = "Omit column headers in csv/table output")
+    @CommandLine.Option(names = "--no-header", scope = CommandLine.ScopeType.INHERIT,
+            description = "Omit column headers in csv/table output")
     private boolean noHeader;
 
-    @CommandLine.Option(names = "--pretty", description = "Pretty-print JSON output")
+    @CommandLine.Option(names = "--pretty", scope = CommandLine.ScopeType.INHERIT,
+            description = "Pretty-print JSON output")
     private boolean pretty;
 
     @CommandLine.Option(names = {"--show-sql"}, description = "Print SQL to stderr for debugging")

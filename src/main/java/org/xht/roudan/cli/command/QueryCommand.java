@@ -6,10 +6,17 @@ import cn.hutool.json.JSONUtil;
 import org.xht.roudan.cli.Main;
 import org.xht.roudan.cli.output.ResultWriter;
 import org.xht.rd.RD;
+import org.xht.xdb.sql.ResultQuery;
+import org.xht.xdb.util.BlobUtil;
+import org.xht.xdb.util.ClobUtil;
 import org.xht.xdb.util.MapUtil;
 import picocli.CommandLine;
 
+import java.sql.Blob;
+import java.sql.Clob;
 import java.sql.Connection;
+import java.sql.ResultSetMetaData;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -45,19 +52,19 @@ public class QueryCommand implements Callable<Integer> {
     @CommandLine.Option(names = "--size", description = "Page size (requires --page)")
     private Integer size;
 
+    @CommandLine.Option(names = {"-o", "--output"}, description = "Output format: json, json-pretty, csv, table")
+    private String outputFormat;
+
     @Override
     public Integer call() throws Exception {
         long start = System.currentTimeMillis();
         try {
+            String resolvedSql = SqlInput.read(sql, sqlFile);
             Main.init(
                     main.getConfigFile(), main.getJdbcUrl(), main.getUser(),
                     main.getPassword(), main.getDriverClass(), main.getDriverJar(),
                     main.getDatasourceName(), main.isShowSql(), main.getConnectTimeout(), main.getSavedName()
             );
-
-            String resolvedSql = sql != null ? sql : cn.hutool.core.io.FileUtil.readUtf8String(sqlFile);
-            if (resolvedSql == null)
-                throw new IllegalArgumentException("Either -s/--sql or -f/--sql-file is required");
 
             if (main.isDryRun()) {
                 ResultWriter.printResult(r -> {
@@ -74,17 +81,37 @@ public class QueryCommand implements Callable<Integer> {
                 RD.setConnection(txConn);
             }
 
-            List<Map<String, Object>> rows;
+            ResultQuery result;
             if (named) {
                 MapUtil<Object> mapArgs = toMapUtil(argsJson);
-                rows = RD.namedQuery().sql(resolvedSql).args(mapArgs).executeQuery().result();
+                result = RD.namedQuery().sql(resolvedSql).args(mapArgs).executeQuery();
             } else {
                 Object[] parsedArgs = parseJsonArray(argsJson);
-                rows = RD.query().sql(resolvedSql).args(parsedArgs).executeQuery().result();
+                result = RD.query().sql(resolvedSql).args(parsedArgs).executeQuery();
             }
 
-            List<Map<String, Object>> limited = applyLimit(rows);
-            buildAndPrintResult(limited, rows.size(), start);
+            List<String> cols = new ArrayList<>();
+            ResultSetMetaData metadata = result.resultSet().getMetaData();
+            for (int i = 1; i <= metadata.getColumnCount(); i++) {
+                String label = metadata.getColumnLabel(i);
+                cols.add(label == null || label.isEmpty() ? metadata.getColumnName(i) : label);
+            }
+            List<Object[]> rows = result.resultTo((rs, count, meta) -> {
+                Object[] values = new Object[cols.size()];
+                for (int i = 0; i < values.length; i++) {
+                    Object value = rs.getObject(i + 1);
+                    if (value instanceof Clob) {
+                        value = ClobUtil.toString((Clob) value);
+                    } else if (value instanceof Blob) {
+                        value = BlobUtil.toBinaryString((Blob) value);
+                    }
+                    values[i] = value;
+                }
+                return values;
+            });
+            String format = outputFormat != null ? outputFormat : main.getOutputFormat();
+            ResultWriter.printQueryResult(cols, applyLimit(rows), rows.size(), System.currentTimeMillis() - start,
+                    format, main.isPretty(), main.isNoHeader());
             return 0;
         } catch (Exception e) {
             ResultWriter.printError(e, System.currentTimeMillis() - start);
@@ -109,7 +136,7 @@ public class QueryCommand implements Callable<Integer> {
         return mapUtil;
     }
 
-    private List<Map<String, Object>> applyLimit(List<Map<String, Object>> rows) {
+    private List<Object[]> applyLimit(List<Object[]> rows) {
         if (page != null && size != null) {
             int from = (page - 1) * size;
             int to = Math.min(from + size, rows.size());
@@ -120,30 +147,5 @@ public class QueryCommand implements Callable<Integer> {
             return rows.subList(0, limit);
         }
         return rows;
-    }
-
-    private void buildAndPrintResult(List<Map<String, Object>> rows, int totalCount, long start) {
-        long elapsed = System.currentTimeMillis() - start;
-        if (rows.isEmpty()) {
-            ResultWriter.printQueryResult(
-                    java.util.Collections.emptyList(), java.util.Collections.emptyList(),
-                    0, elapsed, main.getOutputFormat(), main.isPretty(), main.isNoHeader()
-            );
-            return;
-        }
-        Map<String, Object> first = rows.get(0);
-        String[] cols = first.keySet().toArray(new String[0]);
-        java.util.List<Object[]> rowData = new java.util.ArrayList<>();
-        for (Map<String, Object> row : rows) {
-            Object[] values = new Object[cols.length];
-            for (int i = 0; i < cols.length; i++) {
-                values[i] = row.get(cols[i]);
-            }
-            rowData.add(values);
-        }
-        ResultWriter.printQueryResult(
-                java.util.Arrays.asList(cols), rowData, totalCount, elapsed,
-                main.getOutputFormat(), main.isPretty(), main.isNoHeader()
-        );
     }
 }

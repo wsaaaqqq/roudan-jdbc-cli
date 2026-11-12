@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.5.6 -- 2026-11-12
+
+### Changed
+- Upgrade `roudan-core` to `0.0.10` from Maven Central for reproducible release builds.
+
+### Fixes
+- `exec` uses one JDBC connection for the entire script, so supported DML is committed or rolled back together in transaction mode.
+- `exec --mode auto` reports `success: false` when any statement fails, while continuing to execute subsequent statements.
+- Subcommands support `-h` / `--help` without initializing a database connection.
+- `query`, `modify`, `count`, and `exec` validate missing or blank SQL before initializing a database connection.
+- Query output follows SELECT column order, retains column metadata for empty results, and preserves NULL positions in JSON rows.
+- Empty table output displays `0 rows`; `describe` respects table/CSV output while retaining its existing JSON schema.
+- `query` accepts `-o/--output` after the subcommand; `--pretty` and `--no-header` are accepted in any position.
+
 ## v0.5.5 -- 2026-05-27
 
 ### Changed

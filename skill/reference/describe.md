@@ -11,6 +11,7 @@ roudan describe -t <table-name>
 | 选项 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
 | `-t, --table` | String | **必填** | 表名 |
+| `-o, --output` | String | `json`（或全局设置） | `json`、`json-pretty`、`csv`、`table` |
 
 ## 输出
 
@@ -37,4 +38,7 @@ roudan describe -t <table-name>
 
 ```bash
 roudan describe -t T_USER
+roudan describe -t T_USER -o table
 ```
+
+table/CSV 按 `NAME`、`TYPE`、`SIZE`、`NULLABLE`、`PK` 展示；JSON 保留上面的 `table` 和 `columns` 结构。

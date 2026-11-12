@@ -17,8 +17,8 @@ import static org.junit.Assert.*;
 
 public class H2ModeIntegrationTest {
 
-    private static final String H2_JAR = System.getProperty("user.home")
-            + "/.m2/repository/com/h2database/h2/2.2.220/h2-2.2.220.jar";
+    private static final String H2_JAR = new java.io.File(java.net.URI.create(org.h2.Driver.class.getProtectionDomain()
+            .getCodeSource().getLocation().toExternalForm())).getAbsolutePath();
     private static final String H2_DRIVER = "org.h2.Driver";
     private static final String MYSQL_URL = "jdbc:h2:mem:mysqltest;MODE=MySQL;DB_CLOSE_DELAY=-1";
     private static final String PGSQL_URL = "jdbc:h2:mem:pgsqltest;MODE=PostgreSQL;DB_CLOSE_DELAY=-1";

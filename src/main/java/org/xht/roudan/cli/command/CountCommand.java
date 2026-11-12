@@ -38,15 +38,12 @@ public class CountCommand implements Callable<Integer> {
     public Integer call() throws Exception {
         long start = System.currentTimeMillis();
         try {
+            String resolvedSql = SqlInput.read(sql, sqlFile);
             Main.init(
                     main.getConfigFile(), main.getJdbcUrl(), main.getUser(),
                     main.getPassword(), main.getDriverClass(), main.getDriverJar(),
                     main.getDatasourceName(), main.isShowSql(), main.getConnectTimeout(), main.getSavedName()
             );
-
-            String resolvedSql = sql != null ? sql : cn.hutool.core.io.FileUtil.readUtf8String(sqlFile);
-            if (resolvedSql == null)
-                throw new IllegalArgumentException("Either -s/--sql or -f/--sql-file is required");
 
             if (main.isDryRun()) {
                 ResultWriter.printResult(r -> {

@@ -1,5 +1,7 @@
 package org.xht.roudan.cli.output;
 
+import cn.hutool.json.JSONConfig;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 
 import java.util.LinkedHashMap;
@@ -32,8 +34,8 @@ public class ResultWriter {
             result.put("cols", cols);
             result.put("rows", rows);
             result.put("timeMs", timeMs);
-            String json = pp ? JSONUtil.toJsonPrettyStr(result) : JSONUtil.toJsonStr(result);
-            System.out.println(json);
+            JSONObject json = JSONUtil.parseObj(result, JSONConfig.create().setIgnoreNullValue(false));
+            System.out.println(pp ? json.toStringPretty() : json.toString());
         }
     }
 
@@ -114,6 +116,9 @@ public class ResultWriter {
     }
 
     private static String formatTable(List<String> cols, List<Object[]> rows, boolean noHeader) {
+        if (rows.isEmpty()) {
+            return "0 rows";
+        }
         int[] widths = new int[cols.size()];
         for (int i = 0; i < cols.size(); i++)
             widths[i] = cols.get(i).length();

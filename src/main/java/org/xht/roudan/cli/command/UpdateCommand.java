@@ -24,6 +24,9 @@ public class UpdateCommand implements Callable<Integer> {
     @CommandLine.Option(names = "--version", description = "Specific version to install (default: latest)")
     private String targetVersion;
 
+    @CommandLine.Option(names = {"-h", "--help"}, usageHelp = true, description = "Show this help message and exit.")
+    private boolean help;
+
     @Override
     public Integer call() throws Exception {
         long start = System.currentTimeMillis();
