@@ -1,206 +1,61 @@
 ---
 name: roudan-jdbc
-description: JDBC database CLI tool for AI agents. Execute SQL queries, DDL, inspect schemas, import/export data, test connections against any JDBC database. Use when the user needs to query a database, run SQL, explore tables, connect to MySQL/PostgreSQL/Oracle/SQL Server/DM/H2/Derby, or perform any database operation via JDBC.
-metadata:
-  requires:
-    bins: ["roudan"]
-  cliHelp: "roudan --help"
+description: Execute SQL and inspect database schemas with the roudan JDBC CLI. Use for database queries, writes, SQL scripts, connection troubleshooting, and data import/export.
 ---
 
-# roudan-jdbc-cli
+# roudan-jdbc
 
-> roudan 是一个命令行 JDBC 数据库工具，所有数据库操作通过执行 `roudan` 命令完成。
+使用当前环境的 `roudan` 操作数据库；不依赖特定 AI 客户端或 Windows/WSL 安装路径。以下常用语法以 CLI 0.5.6 为基线。
 
-## 安装
+## 开始：只做必要检查
 
-前置要求：Java 8+、数据库 JDBC 驱动 JAR
+1. 当前任务已确认命令、版本和连接时直接复用，不重复检查环境、读取帮助或列连接。
+2. 首次使用且版本未知时执行一次 `roudan --version`；命令缺失、路径或版本异常才读 [setup.md](reference/setup.md)。
+3. 确认目标主机、数据库/schema、用户；不因存在默认连接就直接使用。已知连接名时优先 `--name`，不要自动 `use`、`login` 或保存密码。排除环境变量/YAML 覆盖目标的冲突，详见 [connections.md](reference/connections.md)。
+4. 常用命令直接使用；参数不确定或不兼容时只查该子命令 `--help`，不要预先读取所有参考。
 
-```bash
-npm install -g roudan-jdbc-cli    # jar 已内嵌，安装即可用
-```
+## 常用命令速查
 
-验证：`roudan --help`
+`dev` 是示例连接名，须替换为已确认的目标；表名、字段和 SQL 同样是示例。连接选项放在子命令前。
 
-## 调用方式
+| 任务 | 命令 |
+|---|---|
+| 小范围查询 | `roudan --name dev query -s "SELECT ID, NAME FROM T_USER WHERE ID=1" --limit 10` |
+| 查表结构 | `roudan --name dev describe -t T_USER` |
+| 查表名 | `roudan --name dev tables --pattern "T_USER%"` |
+| 计数 | `roudan --name dev count -s "SELECT ID FROM T_USER WHERE STATUS='ACTIVE'"` |
+| 单条写入 | `roudan --name dev modify -s "UPDATE T_USER SET NAME='example' WHERE ID=1"` |
+| 批量事务 | `roudan --name dev exec -f migration.sql` |
+| 导出到文件 | `roudan --name dev export -s "SELECT ID, NAME FROM T_USER" --format json -o result.json` |
 
-```bash
-roudan [连接选项] <子命令> [子命令选项]
-```
+`query/modify/count/exec` 的 SQL 用 `-s` 或 `-f`，不要当位置参数。复杂 SQL 使用 UTF-8 文件；涉及 JSON 参数和 Shell 转义时按需读 [query.md](reference/query.md) / [setup.md](reference/setup.md)。`import`、`gen`、`tail` 的特殊用法只查对应 `--help`。
 
-### 连接选项
+## 节省返回量
 
-| 选项 | 说明 |
-|------|------|
-| `-u, --url <jdbc-url>` | JDBC URL |
-| `-n, --user <user>` | 用户名 |
-| `-p, --password <pw>` | 密码 |
-| `-d, --driver <class>` | 驱动类名 |
-| `-j, --driver-jar <path>` | 驱动 JAR 路径 |
-| `-c, --config <file>` | YAML 配置文件 |
+- 默认紧凑 JSON，不默认加 `--pretty`；用户需要人工阅读时再用 table。`query`/`describe` 可在子命令后加 `-o table`；**`export -o` 是文件路径**。
+- 指定字段、WHERE 条件和小行数，避免无界 `SELECT *`。`--limit`/分页是内存截取，不限制数据库扫描；大数据用对应数据库的 SQL 限行或聚合。
+- 已知连接不重复列出；未知连接只列一次并筛选。大结果写文件，返回必要摘要，不把完整数据、帮助或脚本重复回显。
 
-连接参数也可通过环境变量设置：`ROUDAN_JDBC_URL`, `ROUDAN_JDBC_USER`, `ROUDAN_JDBC_PASSWORD`, `ROUDAN_JDBC_DRIVER`, `ROUDAN_JDBC_DRIVER_JAR`
+## 写入安全
 
-### 连接持久化
+- 只执行用户授权范围内的变更；缺少目标、条件或授权时先澄清。关联写入与验证串行执行，验证影响行数和关键数据。
+- 批量事务使用一次 `exec`；**多次 CLI 调用不共享事务**，不要串联独立的 `begin`、`modify`、`commit` 进程。
+- DDL/显式事务控制可能破坏回滚边界；auto 模式可能部分提交。`--dry-run` 仅拆分脚本，不执行 SQL，不预检语法或影响行数。复杂脚本先读 [exec.md](reference/exec.md)。
+- 写入失败或结果不确定时先核实数据库状态，不盲目重试；`affectedRows:0` 不自动等于失败。
 
-`roudan` 支持将连接信息保存到 `~/.roudan/connections.json`，后续无需每次传递连接参数。
+## 判断结果
 
-```bash
-# 登录并保存连接
-roudan -u jdbc:mysql://localhost:3306/test -n root -p pass -d com.mysql.cj.jdbc.Driver -j ./mysql-connector.jar login --name dev
+- 同时检查退出码和结果：CLI 0=成功、1=失败；若与 JSON 的 `success` 矛盾，先排查启动器，不重试写入。结果读 stdout，诊断读 stderr。
+- `query` 的 `cols` 按 SELECT 顺序，`rows` 按位置对应并保留 NULL；`rowCount` 是截取前总行数，table 空结果为 `0 rows`。
+- 不假设所有命令同一结构：`exec` 返回逐语句摘要（SELECT 仅行数）；失败时检查 `results` 或 `partialResults`。`ls` 是数组；导出应指定文件，避免 stdout 混入数据和摘要。
 
-# 从 YAML 文件登录
-roudan login -f application.yml
+## 按需参考，不要全部加载
 
-# 列出已保存连接
-roudan ls
-roudan connections            # 详细列表（含 url/user）
-
-# 切换当前连接
-roudan use dev
-
-# 删除连接
-roudan logout dev
-```
-
-保存后，所有命令省略连接参数：
-```bash
-roudan test
-roudan tables
-roudan query -s "SELECT * FROM T_USER" --limit 5
-```
-
-### 子命令
-
-#### `query` — 查询
-
-```bash
-roudan query -s "SELECT * FROM T_USER WHERE age > ?" -a '[18]' --limit 5
-roudan query -s "SELECT * FROM T_USER WHERE id = :id" --named -a '{"id":"U01"}'
-```
-
-参数：`-s/--sql <sql>` 或 `-f/--sql-file <path>`，`--named` 使用命名参数，`-a/--args` 传参（JSON 数组或对象），`--limit <n>` 限制行数，`--page/--size` 分页。
-
-输出：
-```json
-{"success":true,"rowCount":42,"cols":["ID","NAME"],"rows":[[1,"张三"],[2,"李四"]],"timeMs":15}
-```
-
-rows 中的值保留 JDBC 原生类型：number、string、null。
-
-#### `count` — 计数
-
-```bash
-roudan count -s "SELECT * FROM T_USER WHERE status = :st" --named -a '{"st":"ACTIVE"}'
-```
-
-输出：`{"success":true,"count":1503,"timeMs":8}`
-
-#### `modify` — 增删改 / DDL
-
-```bash
-roudan modify -s "INSERT INTO T_USER (id, name) VALUES (:id, :name)" --named -a '{"id":"U01","name":"张三"}'
-roudan modify -s "CREATE TABLE T_LOG (id VARCHAR(32), msg TEXT)"
-```
-
-输出：`{"success":true,"affectedRows":1,"timeMs":12}`
-
-#### `exec` — 多语句执行
-
-```bash
-roudan exec -s "INSERT INTO t VALUES(1); SELECT * FROM t"
-roudan exec -f script.sql
-roudan exec -s "..." --mode auto      # 每条语句独立提交
-roudan exec -f script.sql --dry-run   # 只解析不执行
-```
-
-参数：`-s/--sql <text>` 或 `-f/--file <path>`，`--mode transaction|auto`（默认 transaction：全成功提交/任意失败回滚）。
-
-输出：
-```json
-{"success":true,"statementCount":2,"results":[{"success":true,"type":"update","affectedRows":1},{"success":true,"type":"query","rowCount":1}],"timeMs":25}
-```
-
-#### `import` — 数据导入
-
-```bash
-roudan import -t T_USER -f data.csv
-roudan import -t T_USER -f data.json --batch 100 --dry-run
-```
-
-参数：`-t/--table <name>`，`-f/--file <path>`（CSV 或 JSON），`--batch <n>`（默认 100），`--delimiter <char>`（CSV），`--dry-run`。
-
-JSON 格式：`[{"col":"val"},...]` 或 `{"cols":["c1","c2"],"rows":[["v1","v2"]]}`
-
-#### `export` — 数据导出
-
-```bash
-roudan export -s "SELECT * FROM T_USER" -o out.json
-roudan export -s "SELECT * FROM T_USER" --format csv --limit 1000
-```
-
-参数：`-s/--sql <sql>`，`-o/--output <path>`（默认 stdout），`--format csv|json`，`--limit <n>`。
-
-#### `gen` — 代码生成
-
-```bash
-roudan gen -t T_USER --ddl                    # 生成 CREATE TABLE
-roudan gen -t T_USER --insert --sample 10      # 生成 INSERT 语句（取 10 行）
-roudan gen -t T_USER --ddl --insert            # 同时生成 DDL + INSERT
-```
-
-参数：`-t/--table <name>`，`--ddl`，`--insert`，`--sample <n>`。
-
-#### `tail` — 表变更监控
-
-```bash
-roudan tail -t T_USER --interval 3 --count 5
-roudan tail -t T_USER --pk id --interval 5     # 按主键增量检测
-roudan tail -s "SELECT * FROM T_LOG ORDER BY ts" --interval 2
-```
-
-参数：`-t/--table <name>` 或 `-s/--sql <sql>`，`--interval <sec>`（默认 3），`--count <n>`（轮询次数），`--pk <col>`（增量检测列）。
-
-#### `tables` — 表列表
-
-```bash
-roudan tables
-roudan tables --pattern "T_%"
-```
-
-输出：`{"success":true,"tables":[{"name":"T_USER","type":"TABLE"}],"timeMs":5}`
-
-#### `describe` — 表结构
-
-```bash
-roudan describe -t T_USER
-```
-
-输出：`{"success":true,"table":"T_USER","columns":[{"name":"ID","type":"VARCHAR","size":32,"nullable":false,"pk":true}],"timeMs":3}`
-
-#### `test` — 连接测试
-
-```bash
-roudan test
-```
-
-输出：`{"success":true,"message":"connection ok","dbProduct":"MySQL 8.0.33","timeMs":120}`
-
-## 输出格式
-
-默认 JSON（紧凑单行）。支持 `-o/--output json|json-pretty|csv|table` 切换格式。`--no-header` 隐藏列头。`--pretty` 美化 JSON。
-
-## 错误处理
-
-所有命令失败时返回相同结构的 JSON 到 stdout，stderr 输出纯文本错误。
-
-```json
-{"success":false,"error":"SQLException: Table 'T_USERX' doesn't exist","errorCode":"SQL_ERROR","timeMs":2}
-```
-
-错误码：`CONFIG_ERROR`, `DRIVER_ERROR`, `CONNECTION_ERROR`, `SQL_ERROR`, `PARAM_ERROR`, `NOT_FOUND`, `AMBIGUOUS`, `UNKNOWN_ERROR`
-
-退出码：0=成功, 1=失败。
-
-## 详细参考
-
-每个子命令的详细文档见 `reference/` 目录。
+| 遇到的问题 | 只读取 |
+|---|---|
+| 安装、版本、跨环境路径、Shell 转义 | [setup.md](reference/setup.md) |
+| 连接选择、配置冲突、驱动、凭据 | [connections.md](reference/connections.md) |
+| 多语句、事务、部分失败 | [exec.md](reference/exec.md) |
+| 参数绑定、分页、查询输出 | [query.md](reference/query.md) |
+| 单条写入参数 | [modify.md](reference/modify.md) |
+| 其他特定用法 | [count.md](reference/count.md)、[tables.md](reference/tables.md)、[describe.md](reference/describe.md)、[test.md](reference/test.md) 中对应的一份 |

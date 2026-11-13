@@ -10,6 +10,8 @@ roudan test
 
 无。
 
+仅在新连接或连接排查时使用；当前任务已验证连接就不必每次查询前再 test。连接选项放在子命令前。
+
 ## 输出（成功）
 
 ```json
@@ -36,5 +38,7 @@ roudan test
 ## 示例
 
 ```bash
-roudan -u jdbc:mysql://localhost:3306/test -n root -p 123456 -d com.mysql.cj.jdbc.Driver -j ./mysql-connector.jar test
+roudan --name dev test
 ```
+
+`dev` 须为已确认的连接；先排除环境变量/YAML 冲突，见 [connections.md](connections.md)。成功只证明可连接并给出数据库产品，不证明当前数据库、用户、schema 就是用户要求的目标。认证/网络失败不要盲目换驱动重试。
